@@ -1,0 +1,39 @@
+package com.example.nhom3.project.modules.identity.repository;
+
+
+import com.example.nhom3.project.modules.identity.entity.User;
+import com.example.nhom3.project.modules.identity.entity.VerificationOtpCode;
+import com.example.nhom3.project.modules.identity.enums.OtpType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.stereotype.Repository;
+
+import java.time.Instant;
+import java.util.Optional;
+
+
+@Repository
+public interface VerificationOtpCodeRepository extends JpaRepository<VerificationOtpCode, Long> {
+
+    Optional<VerificationOtpCode> findTopByUserAndIsUsedFalseOrderByCreatedAtDesc(User user);
+
+    Optional<VerificationOtpCode> findTopByUserOrderByCreatedAtDesc(User user);
+
+    Optional<VerificationOtpCode> findTopByUserAndTypeAndIsUsedFalseOrderByCreatedAtDesc(User user, OtpType type);
+
+    Optional<VerificationOtpCode> findTopByUserAndTypeOrderByCreatedAtDesc(User user, OtpType type);
+
+    // 2. Tìm OTP hợp lệ theo mã OTP + user (dùng khi verify)
+    // Chỉ lấy OTP còn hạn, chưa dùng, chưa bị khóa
+    Optional<VerificationOtpCode> findByOtpCodeAndUserAndExpiryAtAfterAndIsUsedFalseAndLockedUntilLessThan(
+            String otpCode,
+            User user,
+            Instant now,
+            Instant nowForLock
+    );
+
+    boolean existsByUserAndExpiryAtAfterAndIsUsedFalse(User user, Instant now);
+
+    @Modifying
+    void deleteByUser(User user);
+}
