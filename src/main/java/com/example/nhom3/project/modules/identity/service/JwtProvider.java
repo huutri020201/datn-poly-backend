@@ -82,4 +82,18 @@ public class JwtProvider {
                 .reduce("", (s1, s2) -> s1 + " " + s2)
                 .trim();
     }
+
+    public UUID getUserId(String token) {
+
+        try {
+            SignedJWT signedJWT = verifyToken(token);
+            String subject = signedJWT.getJWTClaimsSet().getSubject();
+
+            return UUID.fromString(subject);
+
+        } catch (Exception e) {
+            log.error("Cannot extract userId from token", e);
+            throw new RuntimeException("INVALID_TOKEN");
+        }
+    }
 }
