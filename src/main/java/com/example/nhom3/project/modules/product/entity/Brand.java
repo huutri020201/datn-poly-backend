@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -22,6 +23,9 @@ public class Brand {
 
     @Column(unique = true, nullable = false)
     String slug;
+
+    @OneToMany(mappedBy = "brand")
+    private List<Product> products;
 
     @PrePersist
     @PreUpdate

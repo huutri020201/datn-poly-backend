@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -21,6 +22,9 @@ public class Category {
     @JoinColumn(name = "parent_id")
     Category parent;
 
+    @OneToMany(mappedBy = "parent")
+    private List<Category> children;
+
     @Column(nullable = false)
     String name;
 
@@ -28,7 +32,10 @@ public class Category {
     String slug;
 
     @Column(name = "category_level")
-    int categoryLevel;
+    int categoryLevel = 1;
+
+    @OneToMany(mappedBy = "category")
+    private List<Product> products;
 
     @PrePersist
     @PreUpdate
