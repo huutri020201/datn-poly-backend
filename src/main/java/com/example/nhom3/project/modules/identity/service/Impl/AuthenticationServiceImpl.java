@@ -19,6 +19,7 @@ import com.example.nhom3.project.modules.identity.service.AuthenticationService;
 import com.example.nhom3.project.modules.identity.service.JwtProvider;
 import com.example.nhom3.project.modules.identity.service.OtpLockoutManager;
 import com.example.nhom3.project.modules.identity.validator.RegisterValidator;
+import com.example.nhom3.project.modules.promotion.service.PromotionService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
@@ -60,6 +61,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     ApplicationEventPublisher eventPublisher;
     //    TelegramSmsService telegramSmsService;
     OtpLockoutManager otpLockoutManager;
+    // Promotion (Khuyến mãi)
+    PromotionService promotionService;
 
     @Override
     @Transactional
@@ -101,6 +104,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setStatus("ACTIVE");
         userRepository.save(user);
         tokenRepository.delete(verificationToken);
+        promotionService.rewardWelcomeVoucher(user);
 
         log.info("Email verified successfully for user: {}, email: {}", user.getId(), user.getEmail());
     }
@@ -165,6 +169,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.setFailedAttemptCount(0);
                 user.setLockedUntil(null);
                 userRepository.save(user);
+                // Voucher đăng ký khách hàng mới
+                promotionService.rewardWelcomeVoucher(user);
             }
             if (type == OtpType.FORGOT_PASSWORD) {
 
@@ -492,4 +498,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return "******";
     }
+
 }

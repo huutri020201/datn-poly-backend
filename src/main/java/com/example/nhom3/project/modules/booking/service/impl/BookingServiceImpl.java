@@ -11,6 +11,7 @@ import com.example.nhom3.project.modules.booking.repository.PitchRepository;
 import com.example.nhom3.project.modules.booking.service.BookingService;
 import com.example.nhom3.project.modules.identity.entity.User;
 import com.example.nhom3.project.modules.identity.repository.UserRepository;
+import com.example.nhom3.project.modules.promotion.service.PromotionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,8 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final PitchRepository pitchRepository;
     private final UserRepository userRepository;
-    private final EmailUtils emailUtils; //
+    private final EmailUtils emailUtils;
+    private final PromotionService promotionService;
 
     @Override
     @Transactional
@@ -64,6 +66,8 @@ public class BookingServiceImpl implements BookingService {
         // 5. Lưu đơn đặt sân
         Booking savedBooking = bookingRepository.save(booking);
         BookingResponseDTO responseDTO = bookingMapper.toResponseDTO(savedBooking);
+        // Voucher đặt sân
+        promotionService.rewardVipVoucher(user, savedBooking.getTotalPrice());
 
         // 6. GỌI HÀM GỬI EMAIL CHẠY NGẦM
         emailUtils.sendBookingConfirmationEmail(user.getEmail(), pitch.getName(), responseDTO);
