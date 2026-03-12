@@ -9,4 +9,9 @@ public interface FeedbackService {
     FeedbackResponse createFeedback(Long userId, FeedbackRequest request);
     List<FeedbackResponse> getProductFeedbacks(Long productId);
     List<FeedbackResponse> getCourtFeedbacks(Long courtId);
+    List<FeedbackResponse> getUserFeedbacks(Long userId);
+    FeedbackResponse updateFeedback(Long userId, Long feedbackId, FeedbackRequest request);
+    void deleteFeedback(Long userId, Long feedbackId);
+    List<FeedbackResponse> getAllFeedbacks();
+    FeedbackResponse updateStatus(Long feedbackId, String status);
 }
