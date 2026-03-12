@@ -28,4 +28,6 @@ public class VariantRequest {
     BigDecimal priceOverride;
 
     String imageUrl;
+
+    Boolean isActive = true;
 }

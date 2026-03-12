@@ -42,5 +42,5 @@ public class ProductVariant {
     String imageUrl;
 
     @Column(name = "is_active")
-    boolean isActive;
+    Boolean isActive = true;
 }

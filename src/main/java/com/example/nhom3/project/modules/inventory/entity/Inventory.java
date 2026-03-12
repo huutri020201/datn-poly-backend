@@ -1,9 +1,10 @@
-package com.example.nhom3.project.modules.product.entity;
+package com.example.nhom3.project.modules.inventory.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -35,12 +36,7 @@ public class Inventory {
     @Version
     private Integer version;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    @PreUpdate
-    public void updateTime() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    Instant updatedAt;
 }

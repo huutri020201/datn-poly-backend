@@ -47,10 +47,10 @@ spring:
       dialect: org.hibernate.dialect.PostgreSQLDialect
       hibernate.format_sql: true
 
-server:
-  port: 8080
-  servlet:
-    context-path: /identity
+#server:
+#  port: 8080
+#  servlet:
+#    context-path: /identity
 
 app:
   url:
@@ -66,6 +66,7 @@ logging:
     root: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: DEBUG
+    org.hibernate.orm.results: TRACE;
     org.springframework.jdbc.datasource: DEBUG
     org.springframework.security: DEBUG
 

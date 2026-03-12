@@ -29,7 +29,7 @@ public class Product {
     @JoinColumn(name = "category_id")
     Category category;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     String name;
 
     @Column(unique = true, nullable = false)
@@ -47,7 +47,7 @@ public class Product {
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductVariant> variants;
 
     @PrePersist

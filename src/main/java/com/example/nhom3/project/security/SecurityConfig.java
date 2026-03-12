@@ -42,7 +42,10 @@ public class SecurityConfig {
             "/auth/find-account",
             "/auth/send-otp-reset",
             "/auth/verify-otp-reset",
-            "/auth/reset-password"
+            "/auth/reset-password",
+            "/brands",
+            "/products",
+            "/categories"
     };
 
     //    @Bean
@@ -66,9 +69,11 @@ public class SecurityConfig {
         // THÊM DÒNG NÀY: Kích hoạt cấu hình CORS
         httpSecurity.cors(Customizer.withDefaults());
 
-        httpSecurity.authorizeHttpRequests(request -> request.anyRequest().permitAll());
-//                request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-//                        .anyRequest().authenticated());
+        httpSecurity.authorizeHttpRequests(request ->
+//                request.anyRequest().permitAll()
+                request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated());
+
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(customJwtDecoder)

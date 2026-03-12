@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -12,13 +12,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductResponse {
+public class VariantResponse {
     UUID id;
-    String name;
-    String slug;
-    BigDecimal basePrice;
-    String description;
-    String brandName;
-    String categoryName;
-    List<VariantResponse> variants;
+    String sku;
+    int stockQty;
+    Map<String, Object> attributes;
+    BigDecimal priceOverride;
+    String imageUrl;
+    boolean isActive;
 }
