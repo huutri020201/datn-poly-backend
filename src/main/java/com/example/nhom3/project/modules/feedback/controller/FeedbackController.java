@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/feedbacks")
+@RequestMapping("/feedbacks")
 @RequiredArgsConstructor
 public class FeedbackController {
 
@@ -31,5 +31,29 @@ public class FeedbackController {
     @GetMapping("/court/{courtId}")
     public List<FeedbackResponse> getCourtFeedbacks(@PathVariable Long courtId) {
         return feedbackService.getCourtFeedbacks(courtId);
+    }
+
+    @GetMapping("/my")
+    public List<FeedbackResponse> getMyFeedbacks(
+            @RequestHeader("userId") Long userId
+    ) {
+        return feedbackService.getUserFeedbacks(userId);
+    }
+
+    @PutMapping("/{feedbackId}")
+    public FeedbackResponse updateFeedback(
+            @RequestHeader("userId") Long userId,
+            @PathVariable Long feedbackId,
+            @RequestBody FeedbackRequest request
+    ) {
+        return feedbackService.updateFeedback(userId, feedbackId, request);
+    }
+
+    @DeleteMapping("/{feedbackId}")
+    public void deleteFeedback(
+            @RequestHeader("userId") Long userId,
+            @PathVariable Long feedbackId
+    ) {
+        feedbackService.deleteFeedback(userId, feedbackId);
     }
 }

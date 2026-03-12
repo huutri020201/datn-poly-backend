@@ -1,6 +1,7 @@
 package com.example.nhom3.project.modules.cart.service.impl;
 
 import com.example.nhom3.project.modules.cart.dto.request.AddToCartRequest;
+import com.example.nhom3.project.modules.cart.dto.request.UpdateCartItemRequest;
 import com.example.nhom3.project.modules.cart.dto.response.CartResponse;
 import com.example.nhom3.project.modules.cart.entity.Cart;
 import com.example.nhom3.project.modules.cart.entity.CartItem;
@@ -98,5 +99,39 @@ public class CartServiceImpl implements CartService {
                 .build();
 
         return cartRepository.save(cart);
+    }
+
+    @Override
+    public CartResponse checkout(UUID userId) {
+
+        Cart cart = cartRepository
+                .findByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        cart.setStatus(CartStatus.CHECKED_OUT);
+        cart.setUpdatedAt(LocalDateTime.now());
+
+        cartRepository.save(cart);
+
+        return cartMapper.toResponse(cart);
+    }
+
+    @Override
+    public CartResponse updateItem(UUID userId, UpdateCartItemRequest request) {
+
+        Cart cart = cartRepository
+                .findByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        CartItem item = cartItemRepository
+                .findByCartIdAndVariantId(cart.getId(), request.getVariantId())
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        item.setQuantity(request.getQuantity());
+        item.setUpdatedAt(LocalDateTime.now());
+
+        cartItemRepository.save(item);
+
+        return cartMapper.toResponse(cart);
     }
 }
