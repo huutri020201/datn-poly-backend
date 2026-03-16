@@ -15,6 +15,8 @@ public class CartItemResponse {
     private Long id;
     private UUID productId;
     private UUID variantId;
+    private String productName;
+    private String variantName;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
