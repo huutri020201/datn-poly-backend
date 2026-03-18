@@ -8,12 +8,8 @@ import java.util.UUID;
 
 public interface AddressesService {
     List<Addresses> getAddressesByProfile(UUID profileId);
-
     Addresses getAddressById(UUID id);
-
     Addresses createAddress(Addresses address);
-
     Addresses updateAddress(UUID id, Addresses address);
-
     void deleteAddress(UUID id);
 }

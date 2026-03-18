@@ -1,8 +1,8 @@
 package com.example.nhom3.project.modules.profile.controller;
 
-
+import com.example.nhom3.project.modules.profile.dto.ApiResponse;
 import com.example.nhom3.project.modules.profile.entity.Addresses;
-import com.example.nhom3.project.modules.profile.repository.AddressesRepository;
+import com.example.nhom3.project.modules.profile.service.AddressesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,47 +13,52 @@ import java.util.UUID;
 @RequestMapping("/addresses")
 @RequiredArgsConstructor
 public class AddressesController {
-    private final AddressesRepository addressesRepository;
 
-    // Lấy danh sách địa chỉ theo profile
+    private final AddressesService addressesService;
+
+    // ================= GET LIST =================
     @GetMapping("/profile/{profileId}")
-    public List<Addresses> getAddressesByProfile(@PathVariable UUID profileId) {
-        return addressesRepository.findByProfileId(profileId);
+    public ApiResponse<List<Addresses>> getAddressesByProfile(@PathVariable UUID profileId) {
+        return ApiResponse.success(
+                addressesService.getAddressesByProfile(profileId),
+                "Lấy danh sách địa chỉ thành công"
+        );
     }
 
-    // Lấy 1 địa chỉ
+    // ================= GET ONE =================
     @GetMapping("/{id}")
-    public Addresses getAddressById(@PathVariable UUID id) {
-        return addressesRepository.findById(id).orElse(null);
+    public ApiResponse<Addresses> getAddressById(@PathVariable UUID id) {
+        return ApiResponse.success(
+                addressesService.getAddressById(id),
+                "Lấy địa chỉ thành công"
+        );
     }
 
-    // Thêm địa chỉ
+    // ================= CREATE =================
     @PostMapping
-    public Addresses createAddress(@RequestBody Addresses address) {
-        return addressesRepository.save(address);
+    public ApiResponse<Addresses> createAddress(@RequestBody Addresses address) {
+        return ApiResponse.success(
+                addressesService.createAddress(address),
+                "Tạo địa chỉ thành công"
+        );
     }
 
-    // Cập nhật địa chỉ
+    // ================= UPDATE =================
     @PutMapping("/{id}")
-    public Addresses updateAddress(@PathVariable UUID id, @RequestBody Addresses newAddress) {
+    public ApiResponse<Addresses> updateAddress(
+            @PathVariable UUID id,
+            @RequestBody Addresses newAddress) {
 
-        return addressesRepository.findById(id)
-                .map(address -> {
-                    address.setReceiverName(newAddress.getReceiverName());
-                    address.setPhoneNumber(newAddress.getPhoneNumber());
-                    address.setProvinceCode(newAddress.getProvinceCode());
-                    address.setDistrictCode(newAddress.getDistrictCode());
-                    address.setWardCode(newAddress.getWardCode());
-                    address.setDetailAddress(newAddress.getDetailAddress());
-                    address.setIsDefault(newAddress.getIsDefault());
-                    return addressesRepository.save(address);
-                }).orElse(null);
+        return ApiResponse.success(
+                addressesService.updateAddress(id, newAddress),
+                "Cập nhật địa chỉ thành công"
+        );
     }
 
-    // Xóa địa chỉ
+    // ================= DELETE =================
     @DeleteMapping("/{id}")
-    public void deleteAddress(@PathVariable UUID id) {
-        addressesRepository.deleteById(id);
+    public ApiResponse<?> deleteAddress(@PathVariable UUID id) {
+        addressesService.deleteAddress(id);
+        return ApiResponse.successMessage("Xóa địa chỉ thành công");
     }
 }
-

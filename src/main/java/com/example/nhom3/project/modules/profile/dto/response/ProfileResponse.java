@@ -17,7 +17,6 @@ public record ProfileResponse(
         String membershipLevel,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
-        // đã bổ sung đầy đủ thuộc tính của profile
 ) {
 }
 
