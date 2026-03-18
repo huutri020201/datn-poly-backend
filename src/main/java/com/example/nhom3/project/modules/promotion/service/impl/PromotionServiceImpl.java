@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -170,5 +172,12 @@ public class PromotionServiceImpl implements PromotionService {
                 "        }\n" +
                 "    }\n" +
                 "} " + user.getEmail() + " đã săn thành công mã " + voucherCode);
+    }
+    @Override
+    public List<Voucher> getMyVouchers(UUID userId) {
+        return userVoucherRepository.findAllByUserIdAndStatus(userId, "AVAILABLE")
+                .stream()
+                .map(UserVoucher::getVoucher)
+                .toList();
     }
 }

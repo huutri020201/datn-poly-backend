@@ -35,4 +35,14 @@ public class PromotionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/my-vouchers/{userId}")
+    public ResponseEntity<?> getMyVouchers(@PathVariable UUID userId) {
+        try {
+            // Bạn nên thêm method này vào PromotionService
+            return ResponseEntity.ok(promotionService.getMyVouchers(userId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

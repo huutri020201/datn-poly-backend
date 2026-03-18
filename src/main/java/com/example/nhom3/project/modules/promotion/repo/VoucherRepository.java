@@ -19,4 +19,5 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID> {
     Optional<Voucher> findActiveVoucherByEventType(@Param("eventType") String eventType);
     Optional<Voucher> findByCode(String code);
 
+
 }
