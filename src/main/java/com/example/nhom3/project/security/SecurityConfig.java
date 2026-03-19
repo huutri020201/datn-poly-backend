@@ -44,8 +44,9 @@ public class SecurityConfig {
             "/auth/verify-otp-reset",
             "/auth/reset-password",
             "/brands",
-            "/products",
-            "/categories"
+            "/products/**",
+            "/categories",
+            "/payments/vnpay-callback"
     };
 
     //    @Bean

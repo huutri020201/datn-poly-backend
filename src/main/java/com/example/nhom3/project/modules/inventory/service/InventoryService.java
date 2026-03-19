@@ -15,5 +15,7 @@ public interface InventoryService {
     // Hủy giữ chỗ (Dùng khi hủy đơn hàng)
     void cancelReservation(UUID variantId, int quantity, UUID orderId);
 
+     void addStock(UUID variantId, int quantity);
 
+    public void deductStock(UUID variantId, int quantity);
 }

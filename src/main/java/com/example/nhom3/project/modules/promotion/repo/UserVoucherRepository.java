@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -16,4 +17,5 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UUID> 
     boolean existsByUserIdAndVoucherId(UUID userId, UUID voucherId);
     @Query("SELECT uv FROM UserVoucher uv JOIN FETCH uv.voucher WHERE uv.user.id = :userId AND uv.status = :status")
     List<UserVoucher> findAllByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") String status);
+    Optional<UserVoucher> findByUserIdAndVoucherId(UUID userId, UUID voucherId);
 }

@@ -3,11 +3,11 @@ package com.example.nhom3.project.modules.promotion.service.impl;
 import com.example.nhom3.project.modules.identity.entity.User;
 import com.example.nhom3.project.modules.promotion.entity.UserVoucher;
 import com.example.nhom3.project.modules.promotion.entity.Voucher;
-
 import com.example.nhom3.project.modules.promotion.repo.UserVoucherRepository;
 import com.example.nhom3.project.modules.promotion.repo.VoucherRepository;
 import com.example.nhom3.project.modules.promotion.service.PromotionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PromotionServiceImpl implements PromotionService {
 
     private final VoucherRepository voucherRepository;
@@ -179,5 +180,92 @@ public class PromotionServiceImpl implements PromotionService {
                 .stream()
                 .map(UserVoucher::getVoucher)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal validateAndCalculateDiscount(UUID userId, String voucherCode, BigDecimal orderSubTotal) {
+        // 1. Tìm Voucher trong hệ thống
+        Voucher voucher = voucherRepository.findByCode(voucherCode)
+                .orElseThrow(() -> new RuntimeException("VOUCHER_NOT_FOUND"));
+
+        // 2. Kiểm tra hạn dùng & Trạng thái hoạt động
+        LocalDateTime now = LocalDateTime.now();
+        if (!voucher.getIsActive() || now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
+            throw new RuntimeException("VOUCHER_EXPIRED");
+        }
+
+        // 3. Kiểm tra giá trị đơn hàng tối thiểu (Min Order Value)
+        if (orderSubTotal.compareTo(voucher.getMinOrderValue()) < 0) {
+            throw new RuntimeException("ORDER_TOTAL_NOT_ENOUGH");
+        }
+
+        // 4. Kiểm tra xem User này có sở hữu Voucher này trong ví không (Trạng thái AVAILABLE)
+        UserVoucher userVoucher = userVoucherRepository.findByUserIdAndVoucherId(userId, voucher.getId())
+                .orElseThrow(() -> new RuntimeException("YOU_DONT_OWN_THIS_VOUCHER"));
+
+        if (!userVoucher.getStatus().equals("AVAILABLE")) {
+            throw new RuntimeException("VOUCHER_ALREADY_USED");
+        }
+
+        // 5. Tính toán số tiền giảm
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        if (voucher.getDiscountType().equals("FIXED_AMOUNT")) {
+            discountAmount = voucher.getDiscountValue();
+        } else if (voucher.getDiscountType().equals("PERCENTAGE")) {
+            // Ví dụ: 20% -> 0.2
+            BigDecimal percent = voucher.getDiscountValue().divide(new BigDecimal(100));
+            discountAmount = orderSubTotal.multiply(percent);
+
+            // Kiểm tra mức giảm tối đa (Max Discount Amount)
+            if (voucher.getMaxDiscountAmount() != null && discountAmount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                discountAmount = voucher.getMaxDiscountAmount();
+            }
+        }
+
+        // Không cho phép giảm quá tổng tiền đơn hàng
+        if (discountAmount.compareTo(orderSubTotal) > 0) {
+            discountAmount = orderSubTotal;
+        }
+
+        return discountAmount;
+    }
+
+    @Override
+    @Transactional
+    public void useVoucher(UUID userId, String voucherCode, UUID orderId) {
+        Voucher voucher = voucherRepository.findByCode(voucherCode).orElseThrow();
+
+        UserVoucher userVoucher = userVoucherRepository.findByUserIdAndVoucherId(userId, voucher.getId())
+                .orElseThrow();
+
+        userVoucher.setStatus("USED");
+        userVoucher.setUsedAt(LocalDateTime.now());
+        userVoucher.setOrderReferenceId(orderId);
+
+        userVoucherRepository.save(userVoucher);
+        log.info("Voucher {} đã được sử dụng cho đơn hàng {}", voucherCode, orderId);
+    }
+    @Override
+    @Transactional
+    public void refundVoucher(UUID userId, String voucherCode) {
+        // 1. Tìm Voucher từ Code
+        Voucher voucher = voucherRepository.findByCode(voucherCode)
+                .orElseThrow(() -> new RuntimeException("VOUCHER_NOT_FOUND"));
+
+        // 2. Tìm bản ghi UserVoucher đã sử dụng
+        UserVoucher userVoucher = userVoucherRepository.findByUserIdAndVoucherId(userId, voucher.getId())
+                .orElseThrow(() -> new RuntimeException("USER_VOUCHER_NOT_FOUND"));
+
+        // 3. Chỉ hoàn lại nếu nó đang ở trạng thái USED
+        if ("USED".equals(userVoucher.getStatus())) {
+            userVoucher.setStatus("AVAILABLE"); // Trả về trạng thái có thể dùng lại
+            userVoucher.setUsedAt(null);         // Xóa thời gian dùng
+            userVoucher.setOrderReferenceId(null); // Gỡ liên kết đơn hàng đã hủy
+
+            userVoucherRepository.save(userVoucher);
+            log.info("Đã hoàn lại Voucher {} cho User {}", voucherCode, userId);
+        }
     }
 }

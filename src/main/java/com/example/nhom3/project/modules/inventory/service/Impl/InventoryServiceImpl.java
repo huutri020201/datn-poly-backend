@@ -107,4 +107,45 @@ public class InventoryServiceImpl implements InventoryService {
                 .note("Hoàn lại kho sau khi hủy đơn hàng")
                 .build());
     }
+
+    @Override
+    public void deductStock(UUID variantId, int quantity) {
+        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
+                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
+
+        if (inventory.getAvailableQty() < quantity) {
+            throw new RuntimeException("OUT_OF_STOCK: " + variantId);
+        }
+
+        // Trừ kho khả dụng và tổng kho trực tiếp
+        inventory.setAvailableQty(inventory.getAvailableQty() - quantity);
+        inventory.setTotalQty(inventory.getTotalQty() - quantity);
+
+        inventoryRepository.save(inventory);
+
+        logRepository.save(InventoryLog.builder()
+                .inventory(inventory)
+                .changeQty(-quantity)
+                .actionType("OUTBOUND")
+                .note("Trừ kho trực tiếp khi đặt đơn hàng.")
+                .build());
+    }
+
+    @Override
+    public void addStock(UUID variantId, int quantity) {
+        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
+                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
+
+        inventory.setAvailableQty(inventory.getAvailableQty() + quantity);
+        inventory.setTotalQty(inventory.getTotalQty() + quantity);
+
+        inventoryRepository.save(inventory);
+
+        logRepository.save(InventoryLog.builder()
+                .inventory(inventory)
+                .changeQty(quantity)
+                .actionType("INBOUND")
+                .note("Hoàn kho do hủy đơn hàng.")
+                .build());
+    }
 }

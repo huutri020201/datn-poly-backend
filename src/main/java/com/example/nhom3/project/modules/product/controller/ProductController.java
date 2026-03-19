@@ -25,7 +25,7 @@ public class ProductController {
         return ApiResponse.created(productService.createProduct(request), "Tạo sản phẩm thành công");
     }
 
-    @GetMapping("/{slug}")
+    @GetMapping("/slug/{slug}")
     public ApiResponse<ProductResponse> getBySlug(@PathVariable String slug) {
         return ApiResponse.success(productService.getProductBySlug(slug), "Lấy chi tiết thành công");
     }
