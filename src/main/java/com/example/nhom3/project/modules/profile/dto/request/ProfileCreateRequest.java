@@ -1,10 +1,11 @@
 package com.example.nhom3.project.modules.profile.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
-import java.util.UUID;
 
 public record ProfileCreateRequest(
-        UUID identityId,
+        @NotBlank(message = "Full name is required")
         String fullName,
         String gender,
         LocalDate dob,

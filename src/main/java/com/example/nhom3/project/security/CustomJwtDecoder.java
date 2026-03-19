@@ -1,6 +1,5 @@
 package com.example.nhom3.project.security;
 
-
 import com.example.nhom3.project.modules.identity.dto.request.IntrospectRequest;
 import com.example.nhom3.project.modules.identity.service.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -36,12 +36,12 @@ public class CustomJwtDecoder implements JwtDecoder {
         String actualToken = token.startsWith("Bearer ") ? token.substring(7) : token;
         var response = authenticationService.introspect(
                 IntrospectRequest.builder()
-                        .token(token)
+                        .token(actualToken)
                         .build()
         );
 
         if (!response.isValid()) {
-            throw new JwtException("Token invalid or revoked");
+            throw new BadJwtException("Token invalid or revoked");
         }
 
         if (Objects.isNull(nimbusJwtDecoder)) {
@@ -52,9 +52,9 @@ public class CustomJwtDecoder implements JwtDecoder {
         }
 
         try {
-            return nimbusJwtDecoder.decode(token);
+            return nimbusJwtDecoder.decode(actualToken);
         } catch (Exception e) {
-            throw new JwtException("Decode failed: " + e.getMessage());
+            throw new BadJwtException("Decode failed: " + e.getMessage());
         }
     }
 }
