@@ -14,7 +14,7 @@ import java.text.ParseException;
 public interface AuthenticationService {
     void registerByEmail(EmailRegisterRequest request);
 
-    void verifyEmail(String token);
+    AuthenticationResponse verifyEmail(String token);
 
     void registerByPhone(PhoneRegisterRequest request);
 

@@ -10,6 +10,9 @@ import com.example.nhom3.project.modules.identity.dto.response.IntrospectRespons
 import com.example.nhom3.project.modules.identity.dto.response.UserResponse;
 import com.example.nhom3.project.modules.identity.enums.OtpType;
 import com.example.nhom3.project.modules.identity.service.AuthenticationService;
+import com.example.nhom3.project.modules.profile.dto.request.ProfileCompleteRequest;
+import com.example.nhom3.project.modules.profile.dto.response.ProfileResponse;
+import com.example.nhom3.project.modules.profile.service.ProfileService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -19,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -27,6 +31,7 @@ import java.text.ParseException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
     AuthenticationService authenticationService;
+    ProfileService profileService;
 
     @PostMapping("/register-email")
     @ResponseStatus(HttpStatus.CREATED)
@@ -36,9 +41,17 @@ public class AuthenticationController {
     }
 
     @GetMapping("/verify-email/{token}")
-    public ApiResponse<String> verifyEmail(@PathVariable String token) {
-        authenticationService.verifyEmail(token);
-        return ApiResponse.success("Tài khoản đã được kích hoạt thành công!");
+    public ApiResponse<AuthenticationResponse> verifyEmail(@PathVariable String token) {
+        return ApiResponse.success(authenticationService.verifyEmail(token), "Xác thực email thành công!");
+    }
+
+    @PostMapping("/complete-profile")
+    public ApiResponse<ProfileResponse> completeProfile(@RequestBody @Valid ProfileCompleteRequest request) {
+        UUID id = UUID.fromString(request.userId());
+        return ApiResponse.success(
+                profileService.completeInitialProfile(id, request),
+                "Cập nhật hồ sơ thành công!"
+        );
     }
 
     @PostMapping("/register-phone")

@@ -91,7 +91,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public void verifyEmail(String token) {
+    public AuthenticationResponse verifyEmail(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("INVALID_TOKEN"));
 
@@ -99,14 +99,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             tokenRepository.delete(verificationToken);
             throw new RuntimeException("TOKEN_EXPIRED");
         }
-
         User user = verificationToken.getUser();
         user.setStatus("ACTIVE");
         userRepository.save(user);
         tokenRepository.delete(verificationToken);
         promotionService.rewardWelcomeVoucher(user);
 
-        log.info("Email verified successfully for user: {}, email: {}", user.getId(), user.getEmail());
+        log.info("Email verified successfully for user: {}", user.getEmail());
+        String accessToken = jwtProvider.generateToken(user, 900); // 15 phút
+        String refreshTokenStr = jwtProvider.generateToken(user, jwtProvider.getRefreshTokenExpiry());
+        refreshTokenRepository.deleteByUser(user);
+        RefreshToken refreshTokenEntity = RefreshToken.builder()
+                .user(user)
+                .token(refreshTokenStr)
+                .expiresAt(Instant.now().plus(7, java.time.temporal.ChronoUnit.DAYS))
+                .build();
+        refreshTokenRepository.save(refreshTokenEntity);
+        return authenticationMapper.toAuthenticationResponse(user, accessToken, refreshTokenStr, true);
     }
 
     @Override
