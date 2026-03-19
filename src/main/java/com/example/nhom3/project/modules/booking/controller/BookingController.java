@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/bookings") // Kiểm tra kỹ dòng này
+@RequestMapping("/bookings")
 @RequiredArgsConstructor
 public class BookingController {
 
