@@ -14,6 +14,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderItemResponse {
     Long id;
+    UUID productId;
     UUID variantId;
     String productName;
     String sku;

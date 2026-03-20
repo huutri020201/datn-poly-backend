@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "feedbacks")
@@ -15,12 +16,12 @@ import java.time.LocalDateTime;
 public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private Long userId;
-    private Long productId;
-    private Long courtId;
-    private Long orderId;
-    private Long bookingId;
+    private UUID id;
+    private UUID userId;
+    private UUID productId;
+    private UUID courtId;
+    private UUID orderId;
+    private UUID bookingId;
     private Integer rating;
     @Column(columnDefinition = "TEXT")
     private String comment;

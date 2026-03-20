@@ -5,6 +5,7 @@ import com.example.nhom3.project.modules.cart.entity.CartStatus;
 import com.example.nhom3.project.modules.cart.repository.CartRepository;
 import com.example.nhom3.project.modules.inventory.service.InventoryService;
 import com.example.nhom3.project.modules.order.dto.request.OrderPlaceRequest;
+import com.example.nhom3.project.modules.order.dto.response.OrderItemResponse;
 import com.example.nhom3.project.modules.order.dto.response.OrderResponse;
 import com.example.nhom3.project.modules.order.entity.Order;
 import com.example.nhom3.project.modules.order.entity.OrderItem;
@@ -78,6 +79,7 @@ public class OrderServiceImpl implements OrderService {
             return OrderItem.builder()
                     .order(order)
                     .variantId(variant.getId())
+                    .productId(variant.getProduct().getId())
                     .productName(variant.getProduct().getName())
                     .sku(variant.getSku())
                     .priceAtPurchase(variant.getPriceOverride() != null ?
@@ -172,9 +174,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderDetail(UUID orderId) {
-        return orderRepository.findById(orderId)
-                .map(orderMapper::toResponse)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("ORDER_NOT_FOUND"));
+        return orderMapper.toResponse(order);
     }
 
     @Override

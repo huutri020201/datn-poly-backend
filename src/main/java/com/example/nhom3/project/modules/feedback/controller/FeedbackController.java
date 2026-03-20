@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/feedbacks")
@@ -17,33 +18,33 @@ public class FeedbackController {
 
     @PostMapping
     public FeedbackResponse createFeedback(
-            @RequestHeader("userId") Long userId,
+            @RequestHeader("userId") UUID userId,
             @RequestBody FeedbackRequest request) {
 
         return feedbackService.createFeedback(userId, request);
     }
 
     @GetMapping("/product/{productId}")
-    public List<FeedbackResponse> getProductFeedbacks(@PathVariable Long productId) {
+    public List<FeedbackResponse> getProductFeedbacks(@PathVariable UUID productId) {
         return feedbackService.getProductFeedbacks(productId);
     }
 
     @GetMapping("/court/{courtId}")
-    public List<FeedbackResponse> getCourtFeedbacks(@PathVariable Long courtId) {
+    public List<FeedbackResponse> getCourtFeedbacks(@PathVariable UUID courtId) {
         return feedbackService.getCourtFeedbacks(courtId);
     }
 
     @GetMapping("/my")
     public List<FeedbackResponse> getMyFeedbacks(
-            @RequestHeader("userId") Long userId
+            @RequestHeader("userId") UUID userId
     ) {
         return feedbackService.getUserFeedbacks(userId);
     }
 
     @PutMapping("/{feedbackId}")
     public FeedbackResponse updateFeedback(
-            @RequestHeader("userId") Long userId,
-            @PathVariable Long feedbackId,
+            @RequestHeader("userId") UUID userId,
+            @PathVariable UUID feedbackId,
             @RequestBody FeedbackRequest request
     ) {
         return feedbackService.updateFeedback(userId, feedbackId, request);
@@ -51,8 +52,8 @@ public class FeedbackController {
 
     @DeleteMapping("/{feedbackId}")
     public void deleteFeedback(
-            @RequestHeader("userId") Long userId,
-            @PathVariable Long feedbackId
+            @RequestHeader("userId") UUID userId,
+            @PathVariable UUID feedbackId
     ) {
         feedbackService.deleteFeedback(userId, feedbackId);
     }

@@ -18,6 +18,9 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "product_id")
+    private UUID productId;
+
     @Column(name = "variant_id", nullable = false)
     private UUID variantId;
 

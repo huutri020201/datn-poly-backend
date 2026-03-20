@@ -5,21 +5,31 @@ import com.example.nhom3.project.modules.feedback.dto.FeedbackResponse;
 import com.example.nhom3.project.modules.feedback.entity.Feedback;
 import com.example.nhom3.project.modules.feedback.repository.FeedbackRepository;
 import com.example.nhom3.project.modules.feedback.service.FeedbackService;
+import com.example.nhom3.project.modules.identity.entity.User;
+import com.example.nhom3.project.modules.identity.repository.UserRepository;
+import com.example.nhom3.project.modules.profile.entity.ProfileEntity;
+import com.example.nhom3.project.modules.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FeedbackServiceImpl implements FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
 
     @Override
-    public FeedbackResponse createFeedback(Long userId, FeedbackRequest request) {
-
+    @Transactional
+    public FeedbackResponse createFeedback(UUID userId, FeedbackRequest request) {
         Feedback feedback = Feedback.builder()
                 .userId(userId)
                 .productId(request.getProductId())
@@ -31,69 +41,43 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .imageUrls(request.getImageUrls())
                 .status("ACTIVE")
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         feedbackRepository.save(feedback);
-
-        return FeedbackResponse.builder()
-                .id(feedback.getId())
-                .userId(userId)
-                .rating(feedback.getRating())
-                .comment(feedback.getComment())
-                .imageUrls(feedback.getImageUrls())
-                .createdAt(feedback.getCreatedAt())
-                .build();
+        return mapToResponse(feedback);
     }
 
     @Override
-    public List<FeedbackResponse> getProductFeedbacks(Long productId) {
+    @Transactional(readOnly = true)
+    public List<FeedbackResponse> getProductFeedbacks(UUID productId) {
         return feedbackRepository.findByProductId(productId)
                 .stream()
-                .map(f -> FeedbackResponse.builder()
-                        .id(f.getId())
-                        .userId(f.getUserId())
-                        .rating(f.getRating())
-                        .comment(f.getComment())
-                        .imageUrls(f.getImageUrls())
-                        .createdAt(f.getCreatedAt())
-                        .build())
+                .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public List<FeedbackResponse> getCourtFeedbacks(Long courtId) {
+    @Transactional(readOnly = true)
+    public List<FeedbackResponse> getCourtFeedbacks(UUID courtId) {
         return feedbackRepository.findByCourtId(courtId)
                 .stream()
-                .map(f -> FeedbackResponse.builder()
-                        .id(f.getId())
-                        .userId(f.getUserId())
-                        .rating(f.getRating())
-                        .comment(f.getComment())
-                        .imageUrls(f.getImageUrls())
-                        .createdAt(f.getCreatedAt())
-                        .build())
+                .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public List<FeedbackResponse> getUserFeedbacks(Long userId) {
-
+    @Transactional(readOnly = true)
+    public List<FeedbackResponse> getUserFeedbacks(UUID userId) {
         return feedbackRepository.findByUserId(userId)
                 .stream()
-                .map(f -> FeedbackResponse.builder()
-                        .id(f.getId())
-                        .userId(f.getUserId())
-                        .rating(f.getRating())
-                        .comment(f.getComment())
-                        .imageUrls(f.getImageUrls())
-                        .createdAt(f.getCreatedAt())
-                        .build())
+                .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public FeedbackResponse updateFeedback(Long userId, Long feedbackId, FeedbackRequest request) {
-
+    @Transactional
+    public FeedbackResponse updateFeedback(UUID userId, UUID feedbackId, FeedbackRequest request) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
@@ -104,22 +88,15 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setRating(request.getRating());
         feedback.setComment(request.getComment());
         feedback.setImageUrls(request.getImageUrls());
+        feedback.setUpdatedAt(LocalDateTime.now());
 
         feedbackRepository.save(feedback);
-
-        return FeedbackResponse.builder()
-                .id(feedback.getId())
-                .userId(feedback.getUserId())
-                .rating(feedback.getRating())
-                .comment(feedback.getComment())
-                .imageUrls(feedback.getImageUrls())
-                .createdAt(feedback.getCreatedAt())
-                .build();
+        return mapToResponse(feedback);
     }
 
     @Override
-    public void deleteFeedback(Long userId, Long feedbackId) {
-
+    @Transactional
+    public void deleteFeedback(UUID userId, UUID feedbackId) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
@@ -131,34 +108,43 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<FeedbackResponse> getAllFeedbacks() {
-
         return feedbackRepository.findAll()
                 .stream()
-                .map(f -> FeedbackResponse.builder()
-                        .id(f.getId())
-                        .userId(f.getUserId())
-                        .rating(f.getRating())
-                        .comment(f.getComment())
-                        .imageUrls(f.getImageUrls())
-                        .createdAt(f.getCreatedAt())
-                        .build())
+                .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public FeedbackResponse updateStatus(Long feedbackId, String status) {
-
+    @Transactional
+    public FeedbackResponse updateStatus(UUID feedbackId, String status) {
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
         feedback.setStatus(status);
+        feedback.setUpdatedAt(LocalDateTime.now());
 
         feedbackRepository.save(feedback);
+        return mapToResponse(feedback);
+    }
+
+    private FeedbackResponse mapToResponse(Feedback feedback) {
+        UUID userId = feedback.getUserId();
+        String phone = userRepository.findById(userId)
+                .map(User::getPhone)
+                .orElse("");
+        String name = profileRepository.findById(userId)
+                .map(ProfileEntity::getFullName)
+                .orElse("Khách hàng");
 
         return FeedbackResponse.builder()
                 .id(feedback.getId())
-                .userId(feedback.getUserId())
+                .userId(userId)
+                .productId(feedback.getProductId())
+                .orderId(feedback.getOrderId())
+                .userName(name)
+                .phoneNumber(phone)
                 .rating(feedback.getRating())
                 .comment(feedback.getComment())
                 .imageUrls(feedback.getImageUrls())
