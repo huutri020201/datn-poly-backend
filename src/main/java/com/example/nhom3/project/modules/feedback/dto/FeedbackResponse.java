@@ -5,13 +5,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
 @Builder
 public class FeedbackResponse {
-    private Long id;
-    private Long userId;
+    private UUID id;
+    private UUID userId;
+    private UUID productId;
+    private UUID orderId;
+    private String userName;
+    private String phoneNumber;
     private Integer rating;
     private String comment;
     private String imageUrls;

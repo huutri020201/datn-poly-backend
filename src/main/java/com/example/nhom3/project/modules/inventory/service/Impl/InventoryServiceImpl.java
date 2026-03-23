@@ -1,10 +1,8 @@
 package com.example.nhom3.project.modules.inventory.service.Impl;
 
-import com.example.nhom3.project.modules.inventory.entity.Inventory;
-import com.example.nhom3.project.modules.inventory.entity.InventoryLog;
-import com.example.nhom3.project.modules.inventory.repository.InventoryLogRepository;
-import com.example.nhom3.project.modules.inventory.repository.InventoryRepository;
 import com.example.nhom3.project.modules.inventory.service.InventoryService;
+import com.example.nhom3.project.modules.product.entity.ProductVariant;
+import com.example.nhom3.project.modules.product.repository.ProductVariantRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,132 +18,54 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional
 public class InventoryServiceImpl implements InventoryService {
-    InventoryRepository inventoryRepository;
-    InventoryLogRepository logRepository;
+
+    ProductVariantRepository variantRepository;
 
     @Override
     public void initializeStock(UUID variantId, int initialQty) {
-        Inventory inventory = Inventory.builder()
-                .productVariantId(variantId)
-                .totalQty(initialQty)
-                .availableQty(initialQty)
-                .reservedQty(0)
-                .build();
-
-        inventory = inventoryRepository.save(inventory);
-
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(initialQty)
-                .actionType("INBOUND")
-                .note("Lượng hàng tồn kho ban đầu từ khi tạo ra sản phẩm.")
-                .build());
-    }
-
-    @Override
-    public void reserveStock(UUID variantId, int quantity, UUID orderId) {
-        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
-                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
-
-        if (inventory.getAvailableQty() < quantity) {
-            throw new RuntimeException("OUT_OF_STOCK");
-        }
-
-        // Cập nhật con số
-        inventory.setAvailableQty(inventory.getAvailableQty() - quantity);
-        inventory.setReservedQty(inventory.getReservedQty() + quantity);
-
-        inventoryRepository.save(inventory);
-
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(-quantity)
-                .actionType("RESERVE")
-                .referenceId(orderId)
-                .build());
-    }
-
-    @Override
-    public void confirmOutbound(UUID variantId, int quantity, UUID orderId) {
-        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
-                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
-        if (inventory.getReservedQty() < quantity) {
-            throw new RuntimeException("INVALID_RESERVE_QUANTITY");
-        }
-
-        inventory.setTotalQty(inventory.getTotalQty() - quantity);
-        inventory.setReservedQty(inventory.getReservedQty() - quantity);
-
-        inventoryRepository.save(inventory);
-
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(-quantity)
-                .actionType("OUTBOUND")
-                .referenceId(orderId)
-                .note("Xuất kho thực tế sau khi thanh toán đơn hàng")
-                .build());
-    }
-
-    @Override
-    public void cancelReservation(UUID variantId, int quantity, UUID orderId) {
-        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
-                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
-        if (inventory.getReservedQty() < quantity) {
-            throw new RuntimeException("INVALID_CANCEL_QUANTITY");
-        }
-
-        inventory.setAvailableQty(inventory.getAvailableQty() + quantity);
-        inventory.setReservedQty(inventory.getReservedQty() - quantity);
-        inventoryRepository.save(inventory);
-
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(quantity)
-                .actionType("CANCEL_RESERVE")
-                .referenceId(orderId)
-                .note("Hoàn lại kho sau khi hủy đơn hàng")
-                .build());
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("VARIANT_NOT_FOUND"));
+        variant.setStockQty(initialQty);
+        variantRepository.save(variant);
+        log.info("Đã khởi tạo kho cho variant {}: {}", variantId, initialQty);
     }
 
     @Override
     public void deductStock(UUID variantId, int quantity) {
-        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
-                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
-
-        if (inventory.getAvailableQty() < quantity) {
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("VARIANT_NOT_FOUND"));
+        int currentStock = variant.getStockQty();
+        if (currentStock < quantity) {
             throw new RuntimeException("OUT_OF_STOCK: " + variantId);
         }
+        variant.setStockQty(currentStock - quantity);
+        variantRepository.save(variant);
 
-        // Trừ kho khả dụng và tổng kho trực tiếp
-        inventory.setAvailableQty(inventory.getAvailableQty() - quantity);
-        inventory.setTotalQty(inventory.getTotalQty() - quantity);
-
-        inventoryRepository.save(inventory);
-
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(-quantity)
-                .actionType("OUTBOUND")
-                .note("Trừ kho trực tiếp khi đặt đơn hàng.")
-                .build());
+        log.info("Đã trừ {} sản phẩm từ kho của variant {}", quantity, variantId);
     }
 
     @Override
     public void addStock(UUID variantId, int quantity) {
-        Inventory inventory = inventoryRepository.findByProductVariantId(variantId)
-                .orElseThrow(() -> new RuntimeException("INVENTORY_NOT_FOUND"));
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("VARIANT_NOT_FOUND"));
+        int currentStock = variant.getStockQty();
+        variant.setStockQty(currentStock + quantity);
+        variantRepository.save(variant);
 
-        inventory.setAvailableQty(inventory.getAvailableQty() + quantity);
-        inventory.setTotalQty(inventory.getTotalQty() + quantity);
+        log.info("Đã hoàn lại {} sản phẩm vào kho của variant {}", quantity, variantId);
+    }
 
-        inventoryRepository.save(inventory);
+    @Override
+    public void reserveStock(UUID variantId, int quantity, UUID orderId) {
+        deductStock(variantId, quantity);
+    }
 
-        logRepository.save(InventoryLog.builder()
-                .inventory(inventory)
-                .changeQty(quantity)
-                .actionType("INBOUND")
-                .note("Hoàn kho do hủy đơn hàng.")
-                .build());
+    @Override
+    public void confirmOutbound(UUID variantId, int quantity, UUID orderId) {
+    }
+
+    @Override
+    public void cancelReservation(UUID variantId, int quantity, UUID orderId) {
+        addStock(variantId, quantity);
     }
 }

@@ -4,6 +4,7 @@ import com.example.nhom3.project.modules.feedback.dto.FeedbackResponse;
 import com.example.nhom3.project.modules.feedback.service.FeedbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 import java.util.List;
 
@@ -20,15 +21,12 @@ public class AdminFeedbackController {
     }
 
     @PutMapping("/{id}/status")
-    public FeedbackResponse updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status
-    ) {
+    public FeedbackResponse updateStatus(@PathVariable UUID id, @RequestParam String status) {
         return feedbackService.updateStatus(id, status);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteFeedback(@PathVariable Long id) {
+    public void deleteFeedback(@PathVariable UUID id) {
         feedbackService.deleteFeedback(null, id);
     }
 }
