@@ -33,11 +33,11 @@ public class EmailTokenListener {
             mailMessage.setTo(event.getEmail());
             mailMessage.setSubject("Xác thực tài khoản của bạn");
 
-//            String verifyUrl = String.format("%s/identity/auth/verify?token=%s",
-//                    appUrl.getBase(), event.getToken());
-
-            String verifyUrl = String.format("%s/verify-email?token=%s",
+            String verifyUrl = String.format("%s/auth/verify-email/%s",
                     appUrl.getBase(), event.getToken());
+
+//            String verifyUrl = String.format("%s/verify-email?token=%s",
+//                    appUrl.getBase(), event.getToken());
 
             mailMessage.setText("Chào bạn, vui lòng click vào link sau để kích hoạt tài khoản: " + verifyUrl);
 

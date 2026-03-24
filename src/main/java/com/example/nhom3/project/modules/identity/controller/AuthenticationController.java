@@ -19,8 +19,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.text.ParseException;
 import java.util.UUID;
 
@@ -41,8 +44,30 @@ public class AuthenticationController {
     }
 
     @GetMapping("/verify-email/{token}")
-    public ApiResponse<AuthenticationResponse> verifyEmail(@PathVariable String token) {
-        return ApiResponse.success(authenticationService.verifyEmail(token), "Xác thực email thành công!");
+    public ResponseEntity<?> verifyEmail(@PathVariable String token) {
+        try {
+            // Thực hiện logic verify (Kích hoạt tài khoản, tặng voucher...)
+            authenticationService.verifyEmail(token);
+
+            // Redirect về trang login với message thành công
+            String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/login")
+                    .queryParam("verified", "true")
+                    .build().toUriString();
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(targetUrl))
+                    .build();
+
+        } catch (RuntimeException e) {
+            // Redirect về trang login với message lỗi
+            String errorUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/login")
+                    .queryParam("error", e.getMessage())
+                    .build().toUriString();
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(errorUrl))
+                    .build();
+        }
     }
 
     @PostMapping("/complete-profile")

@@ -75,17 +75,8 @@ jwt:
   signerKey: "ZJG37U8YWFcYH8jNE0p9QUqtS7yMlpolWnrO7XnNNwA"
 
 vnpay:
-  # Thông tin định danh Merchant (Lấy từ email)
   tmn_code: HNMVJKLC
   hash_secret: 9C887DSM6EIG0KV10G57I3KFUPFCLYUB
-
-  # URL cổng thanh toán môi trường TEST
   pay_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-
-  # URL xử lý kết quả sau khi khách thanh toán (Dùng Ngrok để VNPAY gọi về được)
-  # Đây là trang người dùng sẽ nhìn thấy sau khi bấm "Tiếp tục" tại VNPAY
   return_url: https://peroneal-solomon-unresiliently.ngrok-free.dev/payments/vnpay-callback
-
-  # URL để VNPAY gọi ngầm cập nhật Database (IPN)
-  # Quan trọng nhất để đơn hàng chuyển sang trạng thái PAID tự động
   ipn_url: https://peroneal-solomon-unresiliently.ngrok-free.dev/orders/vnpay-ipn
