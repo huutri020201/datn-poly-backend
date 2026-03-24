@@ -149,6 +149,21 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .comment(feedback.getComment())
                 .imageUrls(feedback.getImageUrls())
                 .createdAt(feedback.getCreatedAt())
+                .status(feedback.getStatus())
+                .adminReply(feedback.getAdminReply())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public FeedbackResponse replyToFeedback(UUID feedbackId, String reply) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found"));
+
+        feedback.setAdminReply(reply);
+        feedback.setUpdatedAt(LocalDateTime.now());
+
+        feedbackRepository.save(feedback);
+        return mapToResponse(feedback);
     }
 }

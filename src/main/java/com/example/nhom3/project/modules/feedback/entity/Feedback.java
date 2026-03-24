@@ -24,6 +24,8 @@ public class Feedback {
     private UUID bookingId;
     private Integer rating;
     @Column(columnDefinition = "TEXT")
+    private String adminReply;
+    @Column(columnDefinition = "TEXT")
     private String comment;
     private String imageUrls;
     private String status;

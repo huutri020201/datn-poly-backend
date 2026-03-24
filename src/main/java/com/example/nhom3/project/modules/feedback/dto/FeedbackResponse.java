@@ -21,4 +21,6 @@ public class FeedbackResponse {
     private String comment;
     private String imageUrls;
     private LocalDateTime createdAt;
+    private String status;
+    private String adminReply;
 }
