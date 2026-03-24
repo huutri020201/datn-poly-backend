@@ -12,7 +12,8 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findByUserId(UUID userId);
-    
+
+    List<Booking> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     boolean existsByPitchIdAndStartTimeLessThanAndEndTimeGreaterThan(
             UUID pitchId, LocalDateTime endTime, LocalDateTime startTime);

@@ -10,6 +10,7 @@ public class BookingResponseDTO {
     private UUID id;
     private UUID userId;
     private UUID pitchId;
+    private LocalDateTime createdAt;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal totalPrice;

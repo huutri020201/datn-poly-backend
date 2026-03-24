@@ -39,10 +39,20 @@ public class ProfileServiceImpl implements ProfileService {
     public ProfileResponse getUserProfile(UUID userId) {
 
         ProfileEntity profile = profileRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+                .orElseGet(() -> {
+                    log.info("Profile chưa tồn tại cho {}, tiến hành tự động tạo mới...", userId);
+
+                    ProfileEntity newProfile = new ProfileEntity();
+                    newProfile.setIdentityId(userId);
+                    newProfile.setRankPoint(0);
+                    newProfile.setMembershipLevel("BRONZE");
+                    newProfile.setFullName("Người dùng mới");
+                    return profileRepository.save(newProfile);
+                });
 
         return profileMapper.toResponse(profile);
     }
+
     @Override
     public ProfileResponse updateProfile(UUID userId, ProfileUpdateRequest request) {
 

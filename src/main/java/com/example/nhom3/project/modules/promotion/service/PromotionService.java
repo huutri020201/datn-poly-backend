@@ -15,4 +15,8 @@ public interface PromotionService {
     BigDecimal validateAndCalculateDiscount(UUID userId, String voucherCode, BigDecimal orderSubTotal);
     void useVoucher(UUID userId, String voucherCode, UUID orderId);
     void refundVoucher(UUID userId, String voucherCode);
+    List<Voucher> getAllVouchers();
+    Voucher createVoucher(Voucher voucher);
+    Voucher updateVoucher(UUID id, Voucher voucher);
+    void deleteVoucher(UUID id);
 }

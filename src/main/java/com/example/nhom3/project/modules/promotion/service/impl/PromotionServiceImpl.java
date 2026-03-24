@@ -268,4 +268,47 @@ public class PromotionServiceImpl implements PromotionService {
             log.info("Đã hoàn lại Voucher {} cho User {}", voucherCode, userId);
         }
     }
+    // ================= CRUD ADMIN =================
+    @Override
+    public List<Voucher> getAllVouchers() {
+        return voucherRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Voucher createVoucher(Voucher voucher) {
+        // Có thể thêm logic check trùng mã Code ở đây
+        if (voucherRepository.findByCode(voucher.getCode()).isPresent()) {
+            throw new RuntimeException("Mã Voucher này đã tồn tại!");
+        }
+        return voucherRepository.save(voucher);
+    }
+
+    @Override
+    @Transactional
+    public Voucher updateVoucher(UUID id, Voucher updatedVoucher) {
+        Voucher existing = voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Voucher"));
+
+        existing.setName(updatedVoucher.getName());
+        existing.setCode(updatedVoucher.getCode());
+        existing.setDescription(updatedVoucher.getDescription());
+        existing.setDiscountType(updatedVoucher.getDiscountType());
+        existing.setDiscountValue(updatedVoucher.getDiscountValue());
+        existing.setMaxDiscountAmount(updatedVoucher.getMaxDiscountAmount());
+        existing.setMinOrderValue(updatedVoucher.getMinOrderValue());
+        existing.setEventType(updatedVoucher.getEventType());
+        existing.setStartDate(updatedVoucher.getStartDate());
+        existing.setEndDate(updatedVoucher.getEndDate());
+        existing.setUsageLimit(updatedVoucher.getUsageLimit());
+        existing.setIsActive(updatedVoucher.getIsActive());
+
+        return voucherRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public void deleteVoucher(UUID id) {
+        voucherRepository.deleteById(id);
+    }
 }

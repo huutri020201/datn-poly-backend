@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -90,5 +91,43 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt sân"));
         return bookingMapper.toResponseDTO(booking);
     }
+    @Override
+    public List<BookingResponseDTO> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(bookingMapper::toResponseDTO)
+                .toList();
+    }
 
+    @Override
+    @Transactional
+    public BookingResponseDTO updateBookingStatus(UUID id, String status) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt sân"));
+
+        booking.setStatus(status);
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        return bookingMapper.toResponseDTO(updatedBooking);
+    }
+
+    @Override
+    @Transactional
+    public void deleteBooking(UUID id) {
+        if (!bookingRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy đơn đặt sân để xóa");
+        }
+        bookingRepository.deleteById(id);
+    }
+
+    @Override
+    public List<BookingResponseDTO> getMyBookings() {
+        // Lấy ID người dùng đang đăng nhập
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+
+        // Truy vấn DB và map sang DTO
+        return bookingRepository.findByUserIdOrderByCreatedAtDesc(currentUserId)
+                .stream()
+                .map(bookingMapper::toResponseDTO)
+                .toList();
+    }
 }
