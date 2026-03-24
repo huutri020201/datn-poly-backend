@@ -94,7 +94,7 @@ public class SecurityConfig {
         // Cho phép origin từ Front-end của bạn
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         // Cho phép các phương thức HTTP cần thiết
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         // Cho phép tất cả các headers (như Authorization, Content-Type)
         configuration.setAllowedHeaders(List.of("*"));
         // Cho phép gửi kèm Cookie/Auth Header nếu cần
