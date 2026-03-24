@@ -15,4 +15,5 @@ public interface FeedbackService {
     void deleteFeedback(UUID userId, UUID feedbackId);
     List<FeedbackResponse> getAllFeedbacks();
     FeedbackResponse updateStatus(UUID feedbackId, String status);
+    FeedbackResponse replyToFeedback(UUID feedbackId, String reply);
 }

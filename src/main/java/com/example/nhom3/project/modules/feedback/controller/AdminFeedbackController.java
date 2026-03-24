@@ -29,4 +29,9 @@ public class AdminFeedbackController {
     public void deleteFeedback(@PathVariable UUID id) {
         feedbackService.deleteFeedback(null, id);
     }
+
+    @PutMapping("/{id}/reply")
+    public FeedbackResponse replyToFeedback(@PathVariable UUID id, @RequestBody String reply) {
+        return feedbackService.replyToFeedback(id, reply);
+    }
 }
