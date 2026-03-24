@@ -47,7 +47,8 @@ public class SecurityConfig {
             "/products/**",
             "/categories",
             "/payments/vnpay-callback",
-            "/bookings/**"
+            "/bookings/**",
+            "/pitches/**"
     };
 
     //    @Bean

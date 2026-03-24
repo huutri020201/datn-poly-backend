@@ -15,8 +15,13 @@ public interface ProductService {
 
     // Lấy chi tiết sản phẩm qua ID (Cho Admin/Internal)
     ProductResponse getProductById(UUID id);
-
-    // Lấy danh sách sản phẩm có phân trang và lọc
+    List<ProductResponse> searchProducts(
+            String keyword,
+            UUID categoryId,
+            UUID brandId,
+            Double minPrice,
+            Double maxPrice
+    );
     List<ProductResponse> getAllProducts();
 
     // Cập nhật thông tin sản phẩm

@@ -25,7 +25,7 @@ import java.util.UUID;
 public class JwtProvider {
     String SIGNER_KEY = "ZJG37U8YWFcYH8jNE0p9QUqtS7yMlpolWnrO7XnNNwA";
 
-    long ACCESS_TOKEN_EXPIRY = 900; // 15 phút
+    long ACCESS_TOKEN_EXPIRY = 3600; // 1 giờ
     long REFRESH_TOKEN_EXPIRY = 2592000; // 30 ngày
 
     public String generateToken(User user, long expirySeconds) {

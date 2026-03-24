@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -141,5 +142,48 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findById(id)
                 .map(productMapper::toProductResponse)
                 .orElseThrow(() -> new RuntimeException("PRODUCT_NOT_FOUND"));
+    }
+
+    @Override
+    public List<ProductResponse> searchProducts(String keyword, UUID categoryId, UUID brandId, Double minPrice, Double maxPrice) {
+        // Sửa lỗi Ambiguous bằng cách ép kiểu (Specification<Product>) null
+        Specification<Product> spec = (root, query, cb) -> cb.conjunction();
+
+        // Lọc keyword
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) -> {
+                String pattern = "%" + keyword.toLowerCase() + "%";
+                return cb.or(
+                        cb.like(cb.lower(root.get("name")), pattern),
+                        cb.like(cb.lower(root.get("description")), pattern)
+                );
+            });
+        }
+
+        // Lọc Category
+        if (categoryId != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("category").get("id"), categoryId));
+        }
+
+        // Lọc Brand
+        if (brandId != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("brand").get("id"), brandId));
+        }
+
+        // Lọc Giá (Sử dụng BigDecimal để khớp với Entity)
+        if (minPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.ge(root.get("basePrice"), java.math.BigDecimal.valueOf(minPrice)));
+        }
+        if (maxPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.le(root.get("basePrice"), java.math.BigDecimal.valueOf(maxPrice)));
+        }
+
+        return productRepository.findAll(spec).stream()
+                .map(productMapper::toProductResponse)
+                .toList();
     }
 }
