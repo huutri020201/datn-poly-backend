@@ -30,7 +30,7 @@ public class OrderResponse {
     String customerName;
     String phoneNumber;
     String shippingAddress;
-
+    String note;
     String paymentUrl;
 
     LocalDateTime createdAt;
