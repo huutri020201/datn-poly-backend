@@ -18,18 +18,19 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OAuthAccount {
     @Id
-    private UUID id;
+    @Column(name = "id", updatable = false, nullable = false)
+    UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    User user;
 
-    @Column(nullable = false, length = 50)
-    private String provider;
+    @Column(name = "provider", nullable = false, length = 50)
+    String provider;
 
     @Column(name = "provider_user_id", nullable = false)
-    private String providerUserId;
+    String providerUserId;
 
     @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    LocalDateTime createdAt;
 }

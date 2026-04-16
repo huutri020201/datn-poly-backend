@@ -1,6 +1,7 @@
 package com.example.nhom3.project.modules.identity.service;
 
 import com.example.nhom3.project.config.TelegramProperties;
+import com.example.nhom3.project.modules.identity.dto.event.NotificationEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,13 +19,23 @@ import java.util.Map;
 public class TelegramSmsService {
 
     TelegramProperties telegramProperties;
-    RestTemplate restTemplate = new RestTemplate();
+    RestTemplate restTemplate;
 
-    public void sendOtp(String phone, String otpCode) {
-        String text = "--- [OTP VERIFICATION] ---\n" +
-                "Phone: " + phone + "\n" +
-                "Code: " + otpCode + "\n" +
-                "Expires in: 2 minutes.";
+    public void sendNotification(NotificationEvent event) {
+        String header = switch (event.getType()) {
+            case REGISTER -> "🔑 [XÁC THỰC ĐĂNG KÝ]";
+            case SECURITY_UPDATE -> "⚠️ [CẢNH BÁO BẢO MẬT]";
+            case ACCOUNT_LOCK -> "🚫 [KHÓA TÀI KHOẢN]";
+            default -> "🔔 [THÔNG BÁO]";
+        };
+
+        String body = switch (event.getType()) {
+            case SECURITY_UPDATE -> String.format("Thông tin %s đã đổi thành: %s", event.getTargetName(), event.getNewValue());
+            case ACCOUNT_LOCK -> "Lý do: " + event.getTargetName();
+            default -> "Mã OTP của bạn là: " + event.getCode();
+        };
+
+        String text = header + "\n" + body;
 
         String url = "https://api.telegram.org/bot{token}/sendMessage?chat_id={chatId}&text={text}";
 
@@ -34,11 +45,10 @@ public class TelegramSmsService {
         params.put("text", text);
 
         try {
-            log.info("Đang gửi OTP qua Telegram Bot...");
             restTemplate.getForObject(url, String.class, params);
-            log.info("OTP đã gửi thành công đến Telegram của bạn!");
+            log.info("OTP Telegram gửi thành công tới: {}", event.getIdentifier());
         } catch (Exception e) {
-            log.error("Lỗi khi gọi API Telegram: {}", e.getMessage());
+            log.error("Lỗi API Telegram: {}", e.getMessage());
         }
     }
 }

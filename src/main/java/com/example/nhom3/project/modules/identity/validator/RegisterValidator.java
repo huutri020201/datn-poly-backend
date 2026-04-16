@@ -1,21 +1,38 @@
 package com.example.nhom3.project.modules.identity.validator;
 
-
-import com.example.nhom3.project.modules.identity.dto.request.EmailRegisterRequest;
-import com.example.nhom3.project.modules.identity.dto.request.PhoneRegisterRequest;
+import com.example.nhom3.project.common.exception.AppException;
+import com.example.nhom3.project.common.exception.ErrorCode;
+import com.example.nhom3.project.modules.identity.dto.request.RegisterRequest;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RegisterValidator {
-    public void validate(EmailRegisterRequest request) {
+
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@(.+)$";
+    private static final String PHONE_REGEX = "^(0|84)(3|5|7|8|9)[0-9]{8}$";
+
+    public void validate(RegisterRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("CONFIRM_PASSWORD_NOT_MATCH");
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCHED);
         }
+
+        // 2. Kiểm tra định dạng identifier (Email hoặc Phone)
+        String identifier = request.getIdentifier().trim();
+
+        boolean isEmail = identifier.matches(EMAIL_REGEX);
+        boolean isPhone = identifier.matches(PHONE_REGEX);
+
+        if (!isEmail && !isPhone) {
+            throw new AppException(ErrorCode.INVALID_IDENTIFIER_FORMAT,
+                    "Identifier phải là Email hoặc Số điện thoại hợp lệ.");
+        }
+
+        validatePasswordStrength(request.getPassword());
     }
 
-    public void validate(PhoneRegisterRequest request) {
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("CONFIRM_PASSWORD_NOT_MATCH");
+    private void validatePasswordStrength(String password) {
+        if (password.length() < 8) {
+            throw new AppException(ErrorCode.PASSWORD_TOO_SHORT);
         }
     }
 }

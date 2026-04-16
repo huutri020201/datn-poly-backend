@@ -1,5 +1,6 @@
 package com.example.nhom3.project.modules.identity.dto.response;
 
+import com.example.nhom3.project.modules.identity.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,9 @@ public class UserResponse {
     UUID id;
     String email;
     String phone;
-    String status;
+    UserStatus status;
     Set<String> roles;
     Instant createdAt;
+    boolean twoFactorEnabled;
+    Instant lastLoginAt;
 }

@@ -40,6 +40,6 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
-        return ApiResponse.success("Đã xóa sản phẩm thành công");
+        return ApiResponse.success(null, "Đã xóa sản phẩm thành công");
     }
 }

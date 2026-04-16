@@ -1,45 +1,46 @@
 package com.example.nhom3.project.modules.identity.dto.response;
 
-
+import com.example.nhom3.project.common.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    @Builder.Default
-    private int code = 3636;
 
     @Builder.Default
-    private String status = "success";
-
-    private String message;
-
-    private T result;
+    int code = 1000;
+    @Builder.Default
+    String status = "success";
+    String message;
+    T result;
 
     @Builder.Default
-    private Instant timestamp = Instant.now();
+    Instant timestamp = Instant.now();
 
-    private Object errors;
+    Object errors;
+    Map<String, Object> metadata;
 
-    public static <T> ApiResponse<T> success(T result, String message) {
+    public static <T> ApiResponse<T> success(T result) {
         return ApiResponse.<T>builder()
                 .code(200)
                 .status("success")
-                .message(message)
                 .result(result)
                 .build();
     }
 
-    public static <T> ApiResponse<T> success(String message) {
-        return success(null, message);
+    public static <T> ApiResponse<T> success(T result, String message) {
+        ApiResponse<T> response = success(result);
+        response.setMessage(message);
+        return response;
     }
 
     public static <T> ApiResponse<T> created(T result, String message) {
@@ -51,17 +52,23 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(int code, String message, Object errors) {
+    public static <T> ApiResponse<T> error(ErrorCode errorCode) {
         return ApiResponse.<T>builder()
-                .code(code)
+                .code(errorCode.getCode())
                 .status("error")
-                .message(message)
-                .errors(errors)
+                .message(errorCode.getMessage())
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(int code, String message) {
-        return error(code, message, null);
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, Map<String, Object> metadata) {
+        ApiResponse<T> response = error(errorCode);
+        response.setMetadata(metadata);
+        return response;
     }
 
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, Object errors) {
+        ApiResponse<T> response = error(errorCode);
+        response.setErrors(errors);
+        return response;
+    }
 }

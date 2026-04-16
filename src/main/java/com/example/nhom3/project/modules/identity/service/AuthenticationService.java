@@ -1,42 +1,33 @@
 package com.example.nhom3.project.modules.identity.service;
 
-
 import com.example.nhom3.project.modules.identity.dto.request.*;
-import com.example.nhom3.project.modules.identity.dto.request.verify.VerifyOtpRequest;
+import com.example.nhom3.project.modules.identity.dto.response.ApiResponse;
 import com.example.nhom3.project.modules.identity.dto.response.AuthenticationResponse;
 import com.example.nhom3.project.modules.identity.dto.response.IntrospectResponse;
-import com.example.nhom3.project.modules.identity.dto.response.UserResponse;
-import com.example.nhom3.project.modules.identity.enums.OtpType;
+import com.example.nhom3.project.modules.identity.dto.response.VerificationResponse;
+import com.example.nhom3.project.modules.identity.enums.VerificationType;
 import com.nimbusds.jose.JOSEException;
 
 import java.text.ParseException;
 
 public interface AuthenticationService {
-    void registerByEmail(EmailRegisterRequest request);
+    ApiResponse<Object> register(RegisterRequest request);
+//    AuthenticationResponse verify(VerifyRequest request);
+    VerificationResponse verify(VerifyRequest request);
+    ApiResponse<Object> resendVerification(String identifier, VerificationType type);
 
-    AuthenticationResponse verifyEmail(String token);
-
-    void registerByPhone(PhoneRegisterRequest request);
-
-    void verifyOtp(String identifier, String otpCode, OtpType type);
-
-    void resendOtp(String identifier, OtpType type);
-
+    // --- LUỒNG ĐĂNG NHẬP & TOKEN ---
     AuthenticationResponse authenticate(AuthenticationRequest request);
-
-    AuthenticationResponse refreshToken(String requestRefreshToken);
-
+    AuthenticationResponse refreshToken(RefreshTokenRequest request);
     IntrospectResponse introspect(IntrospectRequest request);
-
     void logout(LogoutRequest request) throws ParseException, JOSEException;
 
-    UserResponse findUserForReset(String identifier);
+    // --- LUỒNG QUÊN MẬT KHẨU (FORGOT PASSWORD) ---
+//    void forgotPassword(String identifier);
+//    String verifyResetCode(VerifyRequest request);
+//    void resetPassword(ResetPasswordRequest request);
 
-    void sendOtpForReset(SendOtpRequest request);
-
-    void verifyOtpForReset(VerifyOtpRequest request);
-
+    ApiResponse<Object> forgotPassword(String identifier);
+    ApiResponse<Object> sendOtpForReset(String identifier, String method);
     void resetPassword(ResetPasswordRequest request);
-
-//    void cleanupUnverifiedUsers();
 }

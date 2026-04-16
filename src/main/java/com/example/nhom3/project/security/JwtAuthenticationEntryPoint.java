@@ -2,6 +2,7 @@ package com.example.nhom3.project.security;
 
 import com.example.nhom3.project.common.exception.ErrorCode;
 import com.example.nhom3.project.modules.identity.dto.response.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,8 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {

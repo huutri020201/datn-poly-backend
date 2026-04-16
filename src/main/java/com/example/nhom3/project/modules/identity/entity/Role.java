@@ -19,9 +19,10 @@ public class Role {
     @Id
     @GeneratedValue
     @org.hibernate.annotations.UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false)
     UUID id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(name = "name", unique = true, nullable = false, length = 50)
     String name;
 
     @OneToMany(mappedBy = "role")

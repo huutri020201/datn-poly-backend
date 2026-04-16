@@ -6,21 +6,18 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ResetPasswordRequest {
-    @NotBlank(message = "IDENTIFIER_CANNOT_BE_EMPTY")
-    String loginIdentifier;
+    @NotBlank(message = "RESET_TOKEN_REQUIRED")
+    String resetToken;
 
-    @NotBlank(message = "OTP_CANNOT_BE_EMPTY")
-    String otp;
-
-    @NotBlank(message = "PASSWORD_INVALID")
-    @Size(min = 8, message = "PASSWORD_INVALID")
+    @NotBlank(message = "NEW_PASSWORD_REQUIRED")
+    @Size(min = 8, message = "PASSWORD_TOO_SHORT")
     String newPassword;
 
-    @NotBlank(message = "CONFIRM_PASSWORD_CANNOT_BE_EMPTY")
+    @NotBlank(message = "CONFIRM_PASSWORD_REQUIRED")
     String confirmPassword;
 }

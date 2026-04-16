@@ -1,12 +1,14 @@
 package com.example.nhom3.project.modules.identity.repository;
 
-
 import com.example.nhom3.project.modules.identity.entity.User;
 import com.example.nhom3.project.modules.identity.entity.VerificationOtpCode;
-import com.example.nhom3.project.modules.identity.enums.OtpType;
+import com.example.nhom3.project.modules.identity.enums.VerificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -15,25 +17,33 @@ import java.util.Optional;
 @Repository
 public interface VerificationOtpCodeRepository extends JpaRepository<VerificationOtpCode, Long> {
 
-    Optional<VerificationOtpCode> findTopByUserAndIsUsedFalseOrderByCreatedAtDesc(User user);
+    Optional<VerificationOtpCode> findTopByUserAndTargetAndTypeAndIsUsedFalseOrderByCreatedAtDesc(
+            User user, String target, VerificationType type);
 
-    Optional<VerificationOtpCode> findTopByUserOrderByCreatedAtDesc(User user);
+    @Query("""
+        SELECT o FROM VerificationOtpCode o 
+        WHERE o.otpCode = :otpCode 
+        AND o.user = :user 
+        AND o.target = :target
+        AND o.type = :type
+        AND o.isUsed = false 
+        AND o.expiryAt > :now 
+        AND (o.lockedUntil IS NULL OR o.lockedUntil < :now)
+    """)
+    Optional<VerificationOtpCode> findValidOtp(
+            String otpCode, User user, String target, VerificationType type, Instant now);
 
-    Optional<VerificationOtpCode> findTopByUserAndTypeAndIsUsedFalseOrderByCreatedAtDesc(User user, OtpType type);
+    Optional<VerificationOtpCode> findTopByUserAndTypeOrderByCreatedAtDesc(User user, VerificationType type);
 
-    Optional<VerificationOtpCode> findTopByUserAndTypeOrderByCreatedAtDesc(User user, OtpType type);
-
-    // 2. Tìm OTP hợp lệ theo mã OTP + user (dùng khi verify)
-    // Chỉ lấy OTP còn hạn, chưa dùng, chưa bị khóa
-    Optional<VerificationOtpCode> findByOtpCodeAndUserAndExpiryAtAfterAndIsUsedFalseAndLockedUntilLessThan(
-            String otpCode,
-            User user,
-            Instant now,
-            Instant nowForLock
-    );
-
-    boolean existsByUserAndExpiryAtAfterAndIsUsedFalse(User user, Instant now);
+    // Trong VerificationOtpCodeRepository.java
+    @Modifying
+    @Query("UPDATE VerificationOtpCode v SET v.isUsed = true WHERE v.user = :user AND v.type = :type AND v.isUsed = false")
+    void invalidateAllActiveOtp(@Param("user") User user, @Param("type") VerificationType type);
 
     @Modifying
+    @Transactional
     void deleteByUser(User user);
+
+    boolean existsByUserAndTargetAndTypeAndExpiryAtAfterAndIsUsedFalse(
+            User user, String target, VerificationType type, Instant now);
 }

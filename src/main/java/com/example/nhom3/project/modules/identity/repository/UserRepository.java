@@ -1,6 +1,7 @@
 package com.example.nhom3.project.modules.identity.repository;
 
 import com.example.nhom3.project.modules.identity.entity.User;
+import com.example.nhom3.project.modules.identity.enums.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,12 +21,12 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.email = :email")
     Optional<User> findByEmailWithRoles(String email);
 
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role " +
+            "WHERE u.email = :identifier OR u.phone = :identifier")
+    Optional<User> findByIdentifierWithRoles(@Param("identifier") String identifier);
+
     @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.phone = :identifier")
     Optional<User> findByEmailOrPhone(@Param("identifier") String identifier);
-
-    Optional<User> findByEmail(String email);
-
-    Optional<User> findByPhone(String phone);
 
     boolean existsByEmail(String email);
 
@@ -35,8 +35,11 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.id = :id")
     Optional<User> findByIdWithRoles(@Param("id") UUID id);
 
-    @Query("SELECT u FROM User u WHERE u.status = 'PENDING_DELETION' AND u.deletedAt <= :threshold")
-    List<User> findExpiredSoftDeletedUsers(@Param("threshold") LocalDateTime threshold);
+    @Query("SELECT u FROM User u WHERE u.status = :status AND u.deletedAt <= :threshold")
+    List<User> findExpiredSoftDeletedUsers(
+            @Param("status") UserStatus status,
+            @Param("threshold") Instant threshold
+    );
 
     @Modifying
     @Transactional

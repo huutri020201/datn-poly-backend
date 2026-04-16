@@ -19,6 +19,7 @@ public class RefreshToken {
     @Id
     @GeneratedValue
     @org.hibernate.annotations.UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false)
     UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,6 +38,7 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     Instant expiresAt;
 
+    @Column(name = "revoked")
     boolean revoked;
 
     @Column(name = "created_at", insertable = false, updatable = false)

@@ -41,6 +41,6 @@ public class BrandController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         brandService.deleteBrand(id);
-        return ApiResponse.success("Đã xóa sản phẩm thành công");
+        return ApiResponse.success(null, "Đã xóa sản phẩm thành công");
     }
 }

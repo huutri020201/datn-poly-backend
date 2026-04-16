@@ -1,6 +1,6 @@
 package com.example.nhom3.project.modules.identity.entity;
 
-import com.example.nhom3.project.modules.identity.enums.OtpType;
+import com.example.nhom3.project.modules.identity.enums.VerificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 import java.time.Instant;
 
 @Entity
-@Table(name = "otp_tokens")
+@Table(name = "verification_otps")
 @Getter
 @Setter
 @Builder
@@ -26,12 +26,15 @@ public class VerificationOtpCode {
     @JoinColumn(name = "user_id", nullable = false)
     User user;
 
+    @Column(name = "target", nullable = false)
+    String target;
+
     @Column(name = "otp_code", nullable = false, length = 6)
     String otpCode;
 
-    @Column(name = "type", nullable = false)
     @Enumerated(EnumType.STRING)
-    OtpType type;
+    @Column(name = "type", nullable = false)
+    VerificationType type;
 
     @Column(name = "expiry_at", nullable = false)
     Instant expiryAt;

@@ -1,5 +1,4 @@
 package com.example.nhom3.project.modules.identity.mapper;
-
 import com.example.nhom3.project.modules.identity.dto.response.AuthenticationResponse;
 import com.example.nhom3.project.modules.identity.entity.User;
 import org.mapstruct.Mapper;
@@ -12,9 +11,11 @@ public interface AuthenticationMapper {
     @Mapping(target = "refreshToken", source = "refreshToken")
     @Mapping(target = "authenticated", source = "isAuthenticated")
     @Mapping(target = "mfaRequired", source = "user.twoFactorEnabled")
+//    @Mapping(target = "isMfaVerified", source = "isMfaVerified")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "email", source = "user.email")
     @Mapping(target = "phone", source = "user.phone")
+    @Mapping(target = "status", source = "user.status")
     AuthenticationResponse toAuthenticationResponse(
             User user,
             String token,
@@ -22,3 +23,4 @@ public interface AuthenticationMapper {
             boolean isAuthenticated
     );
 }
+

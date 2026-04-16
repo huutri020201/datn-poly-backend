@@ -19,6 +19,7 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class InvalidatedToken {
     @Id
+    @Column(name = "id", updatable = false, nullable = false)
     String id;
 
     @Column(name = "expires_at", nullable = false)

@@ -1,6 +1,7 @@
 package com.example.nhom3.project.modules.identity.service;
 
-
+import com.example.nhom3.project.common.exception.AppException;
+import com.example.nhom3.project.common.exception.ErrorCode;
 import com.example.nhom3.project.modules.identity.entity.User;
 import com.example.nhom3.project.modules.identity.entity.VerificationOtpCode;
 import com.example.nhom3.project.modules.identity.repository.UserRepository;
@@ -21,22 +22,51 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class OtpLockoutManager {
+
     VerificationOtpCodeRepository otpRepository;
     UserRepository userRepository;
 
+    static final int MAX_ATTEMPTS = 5; // Tối đa 5 lần nhập sai cho 1 mã
+    static final int MAX_RESENDS = 5;   // Tối đa 5 lần yêu cầu gửi lại trong 1 khoảng thời gian
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordFailedAttempt(VerificationOtpCode otp, User user) {
-        otp.setAttemptCount(otp.getAttemptCount() + 1);
+    public int recordFailedAttempt(VerificationOtpCode otp) {
+        int currentAttempts = otp.getAttemptCount() + 1;
+        otp.setAttemptCount(currentAttempts);
         otp.setLastAttemptAt(Instant.now());
-        if (otp.getAttemptCount() >= 5) {
+
+        // Nếu vượt quá số lần thử, vô hiệu hóa mã này ngay lập tức
+        if (currentAttempts >= MAX_ATTEMPTS) {
             otp.setUsed(true);
+            log.warn("OTP ID {} đã bị vô hiệu hóa do nhập sai quá {} lần", otp.getId(), MAX_ATTEMPTS);
         }
+
         otpRepository.saveAndFlush(otp);
-        user.setFailedAttemptCount(user.getFailedAttemptCount() + 1);
-        if (user.getFailedAttemptCount() >= 10) {
-            user.setLockedUntil(Instant.now().plus(Duration.ofHours(12)));
-            user.setFailedAttemptCount(0);
-        }
+        return currentAttempts;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markOtpUsed(VerificationOtpCode otp) {
+        otp.setUsed(true);
+        otpRepository.saveAndFlush(otp);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void lockUser(User user, Duration duration, String reason) {
+        user.setLockedUntil(Instant.now().plus(duration));
+        // Mày có thể lưu reason vào một bảng Audit Log nếu muốn Pro hơn
         userRepository.saveAndFlush(user);
+        log.info("User {} bị khóa trong {} vì: {}", user.getId(), duration, reason);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleResendLimit(User user, VerificationOtpCode lastOtp) {
+        // Logic này dùng để chặn việc User spam nút "Resend"
+        int resendCount = (lastOtp != null) ? lastOtp.getResendCount() + 1 : 1;
+
+        if (resendCount >= MAX_RESENDS) {
+            lockUser(user, Duration.ofHours(24), "Spam resend OTP");
+            throw new AppException(ErrorCode.TOO_MANY_REQUESTS, "Bạn đã yêu cầu quá nhiều mã. Vui lòng quay lại sau 24h.");
+        }
     }
 }

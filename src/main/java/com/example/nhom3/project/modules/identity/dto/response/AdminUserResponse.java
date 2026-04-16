@@ -13,10 +13,11 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AdminUserResponse extends UserResponse {
-    Integer failedAttemptCount;
+    int failedAttemptCount;
     Instant lockedUntil;
-    String banReason;
-    Instant createdAt;
+    boolean isMfaVerified;
     Instant updatedAt;
-    Boolean twoFactorEnabled;
+    Instant deletedAt;
+    boolean deletedByAdmin;
+    String banReason;
 }

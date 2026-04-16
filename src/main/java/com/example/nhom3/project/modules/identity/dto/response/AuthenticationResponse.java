@@ -1,5 +1,6 @@
 package com.example.nhom3.project.modules.identity.dto.response;
 
+import com.example.nhom3.project.modules.identity.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,9 +15,10 @@ public class AuthenticationResponse {
     String accessToken;
     String refreshToken;
     boolean authenticated;
-
     @Builder.Default
     boolean mfaRequired = false;
+    boolean isMfaVerified;
+    UserStatus status;
     String userId;
     String email;
     String phone;

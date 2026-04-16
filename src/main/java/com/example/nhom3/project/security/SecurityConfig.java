@@ -30,19 +30,20 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
     JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     String[] PUBLIC_ENDPOINTS = {
+            "/auth/register",
+            "/auth/verify",
+            "/auth/resend",
             "/auth/login",
             "/auth/introspect",
             "/auth/refresh-token",
             "/auth/logout",
-            "/auth/register-email",
-            "/auth/verify-email/**",
-            "/auth/register-phone",
-            "/auth/verify-phone",
-            "/auth/resend-otp",
-            "/auth/find-account",
-            "/auth/send-otp-reset",
-            "/auth/verify-otp-reset",
-            "/auth/reset-password",
+            "/auth/forgot-password/find-account",
+            "/auth/forgot-password/send-otp",
+            "/auth/forgot-password/reset",
+            "/auth/forgot-password/**",
+            "/geo/**",
+
+            "/auth/complete-profile",
             "/brands",
             "/products/**",
             "/categories",
@@ -71,6 +72,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         // THÊM DÒNG NÀY: Kích hoạt cấu hình CORS
         httpSecurity.cors(Customizer.withDefaults());
+        httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
         httpSecurity.authorizeHttpRequests(request ->
 //                request.anyRequest().permitAll()
@@ -83,8 +85,6 @@ public class SecurityConfig {
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
         );
-
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
         return httpSecurity.build();
     }

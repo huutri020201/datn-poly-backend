@@ -5,10 +5,10 @@ import com.example.nhom3.project.modules.feedback.dto.FeedbackResponse;
 import com.example.nhom3.project.modules.feedback.entity.Feedback;
 import com.example.nhom3.project.modules.feedback.repository.FeedbackRepository;
 import com.example.nhom3.project.modules.feedback.service.FeedbackService;
+import com.example.nhom3.project.modules.identity.entity.Profile;
 import com.example.nhom3.project.modules.identity.entity.User;
+import com.example.nhom3.project.modules.identity.repository.ProfileRepository;
 import com.example.nhom3.project.modules.identity.repository.UserRepository;
-import com.example.nhom3.project.modules.profile.entity.ProfileEntity;
-import com.example.nhom3.project.modules.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -135,7 +135,7 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .map(User::getPhone)
                 .orElse("");
         String name = profileRepository.findById(userId)
-                .map(ProfileEntity::getFullName)
+                .map(Profile::getFullName)
                 .orElse("Khách hàng");
 
         return FeedbackResponse.builder()

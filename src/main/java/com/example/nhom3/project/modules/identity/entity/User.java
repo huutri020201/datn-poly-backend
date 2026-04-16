@@ -1,6 +1,7 @@
 package com.example.nhom3.project.modules.identity.entity;
 
 
+import com.example.nhom3.project.modules.identity.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,17 +27,18 @@ public class User {
     UUID id;
 
 
-    @Column(unique = true)
+    @Column(name = "email", unique = true)
     String email;
 
-    @Column(unique = true, length = 20)
+    @Column(name = "phone", unique = true, length = 20)
     String phone;
 
     @Column(name = "password_hash")
     String passwordHash;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    String status; // ACTIVE, BANNED, SUSPENDED, PENDING_DELETION, DELETED
+    UserStatus status;
 
     @Column(name = "two_factor_enabled")
     boolean twoFactorEnabled;
@@ -62,7 +64,7 @@ public class User {
     @Column(name = "deleted_at")
     Instant deletedAt;
 
-    @Column(name = "deleted_by_admin")
+    @Column(name = "is_deleted_by_admin")
     boolean deletedByAdmin;
 
     @Column(name = "ban_reason")

@@ -6,23 +6,77 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum ErrorCode {
-    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
-    USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
-    USERNAME_INVALID(1003, "Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
-    INVALID_PASSWORD(1004, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND),
-    UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
-    INVALID_DOB(1008, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.BAD_REQUEST),
-    ACCOUNT_TEMPORARILY_LOCKED(1010, "Locked account", HttpStatus.BAD_REQUEST),
-    NO_ACTIVE_OTP_FOUND(1011, "No active otp found", HttpStatus.BAD_REQUEST),
-    NO_OTP_HISTORY(1012, "No Otp history", HttpStatus.BAD_REQUEST),
-    INVALID_OTP(1013, "Invalid Otp", HttpStatus.BAD_REQUEST),
-    PASSWORD_NOT_MATCHED(1014, "Password not matched", HttpStatus.BAD_REQUEST),
-    OTP_EXPIRED(1015, "Password not matched", HttpStatus.BAD_REQUEST),
-    ;
+    // ========================================================================
+    // 9xxx: SYSTEM & COMMON (Lỗi hệ thống)
+    // ========================================================================
+    UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống chưa xác định", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_KEY(9001, "Thông điệp lỗi không hợp lệ", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED(9002, "Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN),
+
+    // ========================================================================
+    // 10xx: USER & AUTH (Thông tin người dùng)
+    // ========================================================================
+    USER_EXISTED(1001, "Người dùng đã tồn tại", HttpStatus.BAD_REQUEST),
+    USER_NOT_EXISTED(1002, "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
+    INVALID_PASSWORD(1003, "Mật khẩu không chính xác", HttpStatus.BAD_REQUEST),
+    USER_NOT_VERIFIED(1004, "Tài khoản chưa xác thực. Vui lòng xác nhận mã OTP.", HttpStatus.BAD_REQUEST),
+    EMAIL_EXISTED(1005, "Email đã tồn tại", HttpStatus.BAD_REQUEST),
+    PHONE_EXISTED(1006, "Số điện thoại đã tồn tại", HttpStatus.BAD_REQUEST),
+    OLD_PASSWORD_INCORRECT(1007, "Mật khẩu cũ không chính xác", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCHED(1008, "Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
+    UNAUTHENTICATED(1009, "Tài khoản chưa được xác thực hoặc phiên làm việc hết hạn", HttpStatus.UNAUTHORIZED),
+    EMAIL_NOT_REGISTERED(1010, "Email chưa được đăng ký", HttpStatus.BAD_REQUEST),
+    PHONE_NOT_REGISTERED(1011, "Số điện thoại chưa được đăng ký", HttpStatus.BAD_REQUEST),
+    INVALID_IDENTIFIER_FORMAT(1013, "Không đúng định dạng", HttpStatus.BAD_REQUEST),
+    PASSWORD_TOO_SHORT(1014, "Mật khẩu quá ngắn", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(1015, "Mật khẩu không khớp", HttpStatus.BAD_REQUEST),
+    PROFILE_NOT_FOUND(1016, "Không tìm thấy thông tin người dùng", HttpStatus.BAD_REQUEST),
+    NICKNAME_EXISTED(1017, "Nickname đã tồn tại!", HttpStatus.BAD_REQUEST),
+    ADDRESS_NOT_FOUND(1018, "Không tìm thấy địa chỉ", HttpStatus.BAD_REQUEST),
+
+    // ========================================================================
+    // 11xx: ROLE (Phân quyền)
+    // ========================================================================
+    ROLE_NOT_EXISTED(1101, "Quyền không tồn tại", HttpStatus.NOT_FOUND),
+
+    // ========================================================================
+    // 12xx: OTP & TOKEN (Mã xác thực & Phiên làm việc)
+    // ========================================================================
+    INVALID_TOKEN(1201, "Token không hợp lệ", HttpStatus.UNAUTHORIZED),
+    TOKEN_EXPIRED(1202, "Token đã hết hạn", HttpStatus.UNAUTHORIZED),
+    INVALID_OTP(1203, "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(1204, "Mã OTP đã hết hạn", HttpStatus.BAD_REQUEST),
+    OTP_INVALID_OR_EXPIRED(1205, "Mã OTP không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+    NO_ACTIVE_OTP_FOUND(1206, "Không tìm thấy mã OTP khả dụng", HttpStatus.NOT_FOUND),
+    NO_OTP_HISTORY(1207, "Không tìm thấy lịch sử gửi OTP", HttpStatus.NOT_FOUND),
+    OTP_LOCKED(1208, "OTP đã bị khóa", HttpStatus.BAD_REQUEST),
+    PHONE_ALREADY_VERIFIED(1209, "Số điện thoại này đã được xác thực", HttpStatus.BAD_REQUEST),
+    INVALID_METHOD(1210, "Phương thức không hợp lệ", HttpStatus.BAD_REQUEST),
+    OTP_STILL_VALID(1211, "OTP vẫn còn hiệu lực", HttpStatus.BAD_REQUEST),
+    TOO_MANY_REQUESTS(1212, "Bạn đã yêu cầu quá nhiều mã. Vui lòng quay lại sau 24h", HttpStatus.BAD_REQUEST),
+    USER_ALREADY_VERIFIED(1213, "Tài khoản đã xác thực!", HttpStatus.BAD_REQUEST),
+    OTP_MAX_ATTEMPTS_REACHED(1214, "Mã OTP đã hết lượt.", HttpStatus.BAD_REQUEST),
+    TOO_MANY_RESEND_ATTEMPTS(1215, "Bạn đã yêu cầu gửi lại quá nhiều lần!", HttpStatus.BAD_REQUEST),
+    RESEND_TOO_OFTEN(1215, "Chờ gửi lại sau", HttpStatus.BAD_REQUEST),
+    INVALID_RECOVERY_METHOD(1216, "Phương thức khôi phục tài khoản không hợp lệ!", HttpStatus.BAD_REQUEST),
+
+    // ========================================================================
+    // 13xx: ACCOUNT STATUS (Trạng thái tài khoản)
+    // ========================================================================
+    ACCOUNT_BANNED(1301, "Tài khoản của bạn đã bị khóa vĩnh viễn", HttpStatus.FORBIDDEN),
+    ACCOUNT_TEMPORARILY_LOCKED(1302, "Tài khoản bị khóa tạm thời. Vui lòng thử lại sau", HttpStatus.FORBIDDEN),
+    ACCOUNT_LOCKED_BY_ADMIN(1303, "Tài khoản bị khóa bởi quản trị viên", HttpStatus.FORBIDDEN),
+    USER_DELETED_PERMANENTLY(1304, "Tài khoản đã bị xóa vĩnh viễn", HttpStatus.GONE),
+
+    // ========================================================================
+    // 14xx: UPLOAD
+    // ========================================================================
+    UPLOAD_FAILED(1404, "Tải ảnh lên thất bại", HttpStatus.BAD_REQUEST),
+    INVALID_PROVINCE(1405, "Tỉnh không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_DISTRICT(1406, "Huyện không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_WARD(1407, "Đường không hợp lệ", HttpStatus.BAD_REQUEST),
+    ADDRESS_ALREADY_DEFAULT(1408, "Địa chỉ đã là mặc định!", HttpStatus.BAD_REQUEST);
+
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

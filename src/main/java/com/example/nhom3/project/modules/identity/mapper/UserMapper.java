@@ -1,10 +1,8 @@
 package com.example.nhom3.project.modules.identity.mapper;
 
-
 import com.example.nhom3.project.modules.identity.dto.request.AdminCreateUserRequest;
-import com.example.nhom3.project.modules.identity.dto.request.AdminUserUpdateRequest;
-import com.example.nhom3.project.modules.identity.dto.request.EmailRegisterRequest;
-import com.example.nhom3.project.modules.identity.dto.request.PhoneRegisterRequest;
+import com.example.nhom3.project.modules.identity.dto.request.AdminUpdateUserRequest;
+import com.example.nhom3.project.modules.identity.dto.request.RegisterRequest;
 import com.example.nhom3.project.modules.identity.dto.response.AdminUserResponse;
 import com.example.nhom3.project.modules.identity.dto.response.UserResponse;
 import com.example.nhom3.project.modules.identity.entity.User;
@@ -18,33 +16,30 @@ import java.util.stream.Collectors;
 
 
 
-@Mapper(componentModel = "spring", imports = {UUID.class, Collections.class, Collectors.class})
+@Mapper(componentModel = "spring", imports = {UUID.class, Collections.class, Collectors.class}, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
 
-    // 1. Luồng User tự đăng ký (Email/Phone)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "userRoles", ignore = true)
-    User toUser(EmailRegisterRequest request);
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "phone", ignore = true)
+    User toUser(RegisterRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "userRoles", ignore = true)
     @Mapping(target = "status", constant = "ACTIVE")
-    @Mapping(target = "userRoles", ignore = true)
-    User toUser(PhoneRegisterRequest request);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "userRoles", ignore = true)
     User toUser(AdminCreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "userRoles", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
-    void updateUser(@MappingTarget User user, AdminUserUpdateRequest request);
+    void updateUser(@MappingTarget User user, AdminUpdateUserRequest request);
 
-    @Mapping(target = "roles", expression = "java(user.getUserRoles().stream().map(ur -> ur.getRole().getName()).collect(java.util.stream.Collectors.toSet()))")
+//    @Mapping(target = "roles", expression = "java(user.getUserRoles().stream().map(ur -> ur.getRole().getName()).collect(java.util.stream.Collectors.toSet()))")
+    @Mapping(target = "roles", expression = "java(mapUserRolesToNames(user.getUserRoles()))")
     UserResponse toUserResponse(User user);
 
     default Set<String> mapUserRolesToNames(Set<UserRole> userRoles) {
@@ -54,11 +49,10 @@ public interface UserMapper {
                 .collect(Collectors.toSet());
     }
 
-    @InheritConfiguration(name = "toUserResponse")
+    @Mapping(target = "roles", expression = "java(mapUserRolesToNames(user.getUserRoles()))")
+//    @Mapping(target = "mfaVerified", source = "twoFactorEnabled")
     AdminUserResponse toAdminUserResponse(User user);
 
-//    // 4. Trả về Audit Log
-//    AuditLogResponse toAuditLogResponse(AuditLog auditLog);
-
 }
+
 

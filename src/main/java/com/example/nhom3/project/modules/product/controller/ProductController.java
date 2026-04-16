@@ -59,6 +59,6 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         productService.deleteProduct(id);
-        return ApiResponse.success("Đã xóa sản phẩm thành công");
+        return ApiResponse.success(null, "Đã xóa sản phẩm thành công");
     }
 }

@@ -10,9 +10,11 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationRequest {
-    @NotBlank(message = "IDENTIFIER_CANNOT_BE_EMPTY")
-    String loginIdentifier;
+    @NotBlank(message = "IDENTIFIER_REQUIRED")
+    String identifier;
 
-    @NotBlank(message = "PASSWORD_CANNOT_BE_EMPTY")
+    @NotBlank(message = "PASSWORD_REQUIRED")
     String password;
+
+    boolean rememberMe;
 }
