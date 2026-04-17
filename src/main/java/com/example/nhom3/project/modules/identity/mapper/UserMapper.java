@@ -34,6 +34,8 @@ public interface UserMapper {
     User toUser(AdminCreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "phone", ignore = true)
     @Mapping(target = "userRoles", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     void updateUser(@MappingTarget User user, AdminUpdateUserRequest request);

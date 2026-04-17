@@ -1,17 +1,18 @@
 package com.example.nhom3.project.modules.identity.dto.request;
 
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AdminUpdateProfileRequest {
-    String fullName;
-    String nickname;
-    String avatarUrl;
-    Integer rankPoint;
-    String membershipLevel;
+public class BulkActionRequest {
+    List<UUID> ids;
+    String actionValue;
 }

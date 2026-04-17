@@ -33,6 +33,9 @@ public enum ErrorCode {
     PROFILE_NOT_FOUND(1016, "Không tìm thấy thông tin người dùng", HttpStatus.BAD_REQUEST),
     NICKNAME_EXISTED(1017, "Nickname đã tồn tại!", HttpStatus.BAD_REQUEST),
     ADDRESS_NOT_FOUND(1018, "Không tìm thấy địa chỉ", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST(1019, "Yêu cầu tạo người dùng mới không hợp lệ", HttpStatus.BAD_REQUEST),
+    PROFILE_NOT_EXISTED(1020, "Hồ sơ người dùng không tồn tại", HttpStatus.BAD_REQUEST),
+    INVALID_MEMBERSHIP_LEVEL(1021, "Membership level không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ========================================================================
     // 11xx: ROLE (Phân quyền)

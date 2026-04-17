@@ -1,13 +1,8 @@
 package com.example.nhom3.project.modules.identity.controller;
 
-import com.example.nhom3.project.modules.identity.dto.request.AdminCreateUserRequest;
-import com.example.nhom3.project.modules.identity.dto.request.AdminUpdateUserRequest;
-import com.example.nhom3.project.modules.identity.dto.request.ChangePasswordRequest;
-import com.example.nhom3.project.modules.identity.dto.request.UpdateIdentifierRequest;
-import com.example.nhom3.project.modules.identity.dto.response.AdminUserResponse;
-import com.example.nhom3.project.modules.identity.dto.response.ApiResponse;
-import com.example.nhom3.project.modules.identity.dto.response.PageResponse;
-import com.example.nhom3.project.modules.identity.dto.response.UserResponse;
+import com.example.nhom3.project.modules.identity.dto.request.*;
+import com.example.nhom3.project.modules.identity.dto.response.*;
+import com.example.nhom3.project.modules.identity.enums.UserStatus;
 import com.example.nhom3.project.modules.identity.service.UserService;
 import com.example.nhom3.project.common.utils.SecurityUtils;
 import jakarta.validation.Valid;
@@ -38,10 +33,15 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<PageResponse<AdminUserResponse>> getAllUsers(
+    public ApiResponse<PageResponse<AdminUser360ViewResponse>> getAllUsers(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
-        return ApiResponse.success(userService.getAllUsers(page, size), "Lấy danh sách người dùng phân trang");
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) UserStatus status,
+            @RequestParam(value = "role", required = false) String role
+    ) {
+        var result = userService.getAdminUserList(page, size, keyword, status, role);
+        return ApiResponse.success(result, "Lấy danh sách người dùng với bộ lọc thành công");
     }
 
     @GetMapping("/{id}/admin-detail")
@@ -86,6 +86,28 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<AdminUserResponse> restoreByAdmin(@PathVariable UUID id) {
         return ApiResponse.success(userService.restoreUserByAdmin(id), "Khôi phục trạng thái xóa bởi Admin");
+    }
+
+    @PatchMapping("/bulk-status")
+    public ApiResponse<Void> bulkUpdateStatus(@RequestBody BulkActionRequest request) {
+        UserStatus status = UserStatus.valueOf(request.getActionValue());
+        userService.bulkUpdateStatus(request.getIds(), status);
+        return ApiResponse.<Void>builder()
+                .message("Cập nhật trạng thái hàng loạt thành công")
+                .build();
+    }
+
+    @PostMapping("/bulk-notify")
+    public ApiResponse<Void> bulkNotify(@RequestBody BulkNotifyRequest request) {
+        userService.sendBulkNotification(
+                request.getIds(),
+                request.getCustomSubject(),
+                request.getCustomMessage(),
+                request.getType()
+        );
+        return ApiResponse.<Void>builder()
+                .message("Đã xếp hàng gửi thông báo hàng loạt")
+                .build();
     }
 
     // --- NHÓM USER (Cá nhân tự quản lý) ---

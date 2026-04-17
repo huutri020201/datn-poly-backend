@@ -8,10 +8,12 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AdminUpdateProfileRequest {
-    String fullName;
-    String nickname;
-    String avatarUrl;
-    Integer rankPoint;
-    String membershipLevel;
+public class UserFilterRequest {
+    int page = 1;
+    int size = 10;
+
+    String keyword;
+    String role;
+    String status;
+    String level;
 }

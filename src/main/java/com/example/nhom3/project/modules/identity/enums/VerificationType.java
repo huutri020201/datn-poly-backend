@@ -10,5 +10,5 @@ public enum VerificationType {
     SECURITY_UPDATE,
     ACCOUNT_LOCK,
     ACCOUNT_UNLOCK,
-
+    SYSTEM_NOTIFICATION,
 }

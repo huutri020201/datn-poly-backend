@@ -3,10 +3,7 @@ package com.example.nhom3.project.modules.identity.controller;
 import com.example.nhom3.project.modules.identity.dto.request.AddressRequest;
 import com.example.nhom3.project.modules.identity.dto.request.AdminUpdateProfileRequest;
 import com.example.nhom3.project.modules.identity.dto.request.UpdateProfileRequest;
-import com.example.nhom3.project.modules.identity.dto.response.AddressResponse;
-import com.example.nhom3.project.modules.identity.dto.response.ApiResponse;
-import com.example.nhom3.project.modules.identity.dto.response.MyProfileResponse;
-import com.example.nhom3.project.modules.identity.dto.response.PublicProfileResponse;
+import com.example.nhom3.project.modules.identity.dto.response.*;
 import com.example.nhom3.project.modules.identity.service.AddressService;
 import com.example.nhom3.project.modules.identity.service.ProfileService;
 import jakarta.validation.Valid;
@@ -104,10 +101,30 @@ public class ProfileController {
     // SECTION 3: ADMIN & PUBLIC (DÀNH CHO ADMIN HOẶC CÔNG KHAI)
     // ==========================================
 
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<PageResponse<MyProfileResponse>> getAllProfiles(
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
+        return ApiResponse.success(profileService.getAllProfiles(page, size), "Lấy danh sách profile phân trang");
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<? extends PublicProfileResponse> getPublicProfile(@PathVariable UUID id) {
         return ApiResponse.<PublicProfileResponse>builder()
                 .result(profileService.getProfile(id))
+                .build();
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<MyProfileResponse> updateProfileByAdmin(
+            @PathVariable("id") UUID id,
+            @RequestBody @Valid AdminUpdateProfileRequest request) {
+
+        return ApiResponse.<MyProfileResponse>builder()
+                .result(profileService.updateProfileByAdmin(id, request))
+                .message("Admin cập nhật hồ sơ người dùng thành công")
                 .build();
     }
 

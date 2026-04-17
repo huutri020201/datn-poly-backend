@@ -5,6 +5,7 @@ import com.example.nhom3.project.modules.identity.dto.event.UserActivatedEvent;
 import com.example.nhom3.project.modules.identity.dto.request.AdminUpdateProfileRequest;
 import com.example.nhom3.project.modules.identity.dto.request.UpdateProfileRequest;
 import com.example.nhom3.project.modules.identity.dto.response.MyProfileResponse;
+import com.example.nhom3.project.modules.identity.dto.response.PageResponse;
 import com.example.nhom3.project.modules.identity.dto.response.PublicProfileResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,5 +20,10 @@ public interface ProfileService {
 
     MyProfileResponse updateProfileInternal(UUID targetId, AdminUpdateProfileRequest request);
 
+    PageResponse<MyProfileResponse> getAllProfiles(int page, int size);
+
     String uploadAvatar(MultipartFile file);
+
+    MyProfileResponse updateProfileByAdmin(UUID targetId, AdminUpdateProfileRequest request);
+
 }

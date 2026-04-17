@@ -3,6 +3,7 @@ package com.example.nhom3.project.modules.identity.dto.event;
 import com.example.nhom3.project.modules.identity.entity.User;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.context.ApplicationEvent;
 

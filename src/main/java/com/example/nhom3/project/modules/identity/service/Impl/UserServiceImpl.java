@@ -4,6 +4,7 @@ package com.example.nhom3.project.modules.identity.service.Impl;
 
 import com.example.nhom3.project.modules.identity.dto.event.NotificationEvent;
 import com.example.nhom3.project.modules.identity.dto.request.*;
+import com.example.nhom3.project.modules.identity.dto.response.AdminUser360ViewResponse;
 import com.example.nhom3.project.modules.identity.dto.response.AdminUserResponse;
 import com.example.nhom3.project.modules.identity.dto.response.PageResponse;
 import com.example.nhom3.project.modules.identity.dto.response.UserResponse;
@@ -16,6 +17,7 @@ import com.example.nhom3.project.common.exception.ErrorCode;
 import com.example.nhom3.project.modules.identity.mapper.UserMapper;
 import com.example.nhom3.project.modules.identity.repository.RoleRepository;
 import com.example.nhom3.project.modules.identity.repository.UserRepository;
+import com.example.nhom3.project.modules.identity.repository.UserRoleRepository;
 import com.example.nhom3.project.modules.identity.service.UserService;
 import com.example.nhom3.project.common.utils.SecurityUtils;
 import lombok.AccessLevel;
@@ -36,7 +38,10 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -46,6 +51,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
+    UserRoleRepository userRoleRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     ApplicationEventPublisher eventPublisher;
@@ -55,17 +61,28 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public AdminUserResponse createUser(AdminCreateUserRequest request) {
-        if (userRepository.existsByEmail(request.getEmail()))
-            throw new AppException(ErrorCode.EMAIL_EXISTED);
 
-        if (userRepository.existsByPhone(request.getPhone()))
+        String email = StringUtils.hasText(request.getEmail())
+                ? request.getEmail().trim()
+                : null;
+
+        String phone = StringUtils.hasText(request.getPhone())
+                ? request.getPhone().trim()
+                : null;
+
+        if (email == null && phone == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (email != null && userRepository.existsByEmail(email)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+
+        if (phone != null && userRepository.existsByPhone(phone)) {
             throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
 
         User user = userMapper.toUser(request);
-
-        if (user.getId() == null) {
-            user.setId(null);
-        }
 
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
@@ -73,15 +90,13 @@ public class UserServiceImpl implements UserService {
 
         if (!CollectionUtils.isEmpty(request.getRoles())) {
             request.getRoles().forEach(roleName -> {
-                String formattedRoleName = roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
+                String formattedRoleName = roleName.startsWith("ROLE_")
+                        ? roleName
+                        : "ROLE_" + roleName;
 
                 Role role = roleRepository.findByName(formattedRoleName)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED) {
-                            @Override
-                            public String getMessage() {
-                                return "Không tìm thấy quyền: " + formattedRoleName;
-                            }
-                        });
+                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
                 user.addRole(role);
             });
         }
@@ -131,21 +146,34 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new AppException(ErrorCode.EMAIL_EXISTED);
+            }
+            user.setEmail(request.getEmail());
+        }
+        if (StringUtils.hasText(request.getPhone()) && !request.getPhone().equals(user.getPhone())) {
+            if (userRepository.existsByPhone(request.getPhone())) {
+                throw new AppException(ErrorCode.PHONE_EXISTED);
+            }
+            user.setPhone(request.getPhone());
+        }
 
-        userMapper.updateUser(user, request);
-
+       userMapper.updateUser(user, request);
         if (StringUtils.hasText(request.getPassword())) {
             user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
-        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+        if (request.getRoles() != null) {
             List<Role> roles = roleRepository.findAllByNameIn(request.getRoles());
             if (roles.size() != request.getRoles().size()) {
                 throw new AppException(ErrorCode.ROLE_NOT_EXISTED);
             }
-
             user.getUserRoles().clear();
             roles.forEach(user::addRole);
+        }
+        if (request.getFailedAttemptCount() != null && request.getFailedAttemptCount() == 0) {
+            user.setLockedUntil(null);
         }
 
         return userMapper.toAdminUserResponse(userRepository.save(user));
@@ -351,6 +379,78 @@ public class UserServiceImpl implements UserService {
         }
         return userMapper.toUserResponse(userRepository.save(user));
     }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public PageResponse<AdminUser360ViewResponse> getAdminUserList(int page, int size, String keyword, UserStatus status, String role) {
+        String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        String filterRole = (role != null && !role.trim().isEmpty()) ? role.trim() : null;
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+
+        Page<AdminUser360ViewResponse> usersPage = userRepository.findAllUsersDetailed(searchKeyword, status, filterRole, pageable);
+        List<AdminUser360ViewResponse> userList = usersPage.getContent();
+
+        if (!userList.isEmpty()) {
+            List<UUID> userIds = userList.stream()
+                    .map(AdminUser360ViewResponse::getId)
+                    .toList();
+
+            List<Object[]> rolesData = userRoleRepository.findRolesByUserIds(userIds);
+
+            userList.forEach(userDto -> {
+                Set<String> roles = rolesData.stream()
+                        .filter(row -> row[0].equals(userDto.getId()))
+                        .map(row -> (String) row[1])
+                        .collect(Collectors.toSet());
+                userDto.setRoles(roles);
+            });
+        }
+
+        return PageResponse.<AdminUser360ViewResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(usersPage.getTotalPages())
+                .totalElements(usersPage.getTotalElements())
+                .data(userList)
+                .hasNext(usersPage.hasNext())
+                .hasPrevious(usersPage.hasPrevious())
+                .build();
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public void bulkUpdateStatus(List<UUID> ids, UserStatus status) {
+        userRepository.updateStatusInBulk(ids, status);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public void sendBulkNotification(List<UUID> ids, String subject, String content, VerificationType type) {
+        List<User> users = userRepository.findAllById(ids);
+
+        for (User user : users) {
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                eventPublisher.publishEvent(NotificationEvent.builder()
+                        .identifier(user.getEmail())
+                        .customSubject(subject)
+                        .customMessage(content)
+                        .type(type)
+                        .build());
+            }
+            if (user.getPhone() != null && !user.getPhone().isBlank()) {
+                eventPublisher.publishEvent(NotificationEvent.builder()
+                        .identifier(user.getPhone())
+                        .customSubject(subject)
+                        .customMessage(content)
+                        .type(type)
+                        .build());
+            }
+        }
+    }
+
+
 
     private void publishSecurityEvent(User user, String target, String newValue) {
         eventPublisher.publishEvent(NotificationEvent.builder()
