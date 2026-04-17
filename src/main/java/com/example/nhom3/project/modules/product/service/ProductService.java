@@ -2,13 +2,14 @@ package com.example.nhom3.project.modules.product.service;
 
 import com.example.nhom3.project.modules.product.dto.request.ProductRequest;
 import com.example.nhom3.project.modules.product.dto.response.ProductResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface ProductService {
     // Tạo sản phẩm (Đã làm)
-    ProductResponse createProduct(ProductRequest request);
+    ProductResponse createProduct(ProductRequest request, List<MultipartFile> images);
 
     // Lấy chi tiết sản phẩm qua Slug (Cho Client)
     ProductResponse getProductBySlug(String slug);

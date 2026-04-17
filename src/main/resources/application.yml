@@ -30,9 +30,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/db_identity
+    url: jdbc:postgresql://localhost:5432/datn
     username: postgres
-    password: Djjcute@147258369
+    password: 123
 
     hikari:
       maximum-pool-size: 10

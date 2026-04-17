@@ -4,11 +4,15 @@ import com.example.nhom3.project.modules.identity.dto.response.ApiResponse;
 import com.example.nhom3.project.modules.product.dto.request.ProductRequest;
 import com.example.nhom3.project.modules.product.dto.response.ProductResponse;
 import com.example.nhom3.project.modules.product.service.ProductService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +24,20 @@ import java.util.UUID;
 public class ProductController {
     ProductService productService;
 
-    @PostMapping
-    public ApiResponse<ProductResponse> create(@RequestBody @Valid ProductRequest request) {
-        return ApiResponse.created(productService.createProduct(request), "Tạo sản phẩm thành công");
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ProductResponse> create(
+            @RequestPart("product") String productJson, // Nhận chuỗi JSON
+            @RequestPart(value = "images", required = false) List<MultipartFile> images // Nhận list file
+    ) throws JsonProcessingException {
+
+        // Chuyển String JSON thành Object ProductRequest
+        ObjectMapper objectMapper = new ObjectMapper();
+        ProductRequest request = objectMapper.readValue(productJson, ProductRequest.class);
+
+        return ApiResponse.created(
+                productService.createProduct(request, images),
+                "Tạo sản phẩm thành công"
+        );
     }
     @GetMapping
     public ApiResponse<List<ProductResponse>> getAll(

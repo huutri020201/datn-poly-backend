@@ -14,7 +14,7 @@ import com.example.nhom3.project.common.exception.ErrorCode;
 import com.example.nhom3.project.modules.identity.mapper.ProfileMapper;
 import com.example.nhom3.project.modules.identity.repository.ProfileRepository;
 import com.example.nhom3.project.modules.identity.repository.UserRepository;
-import com.example.nhom3.project.modules.identity.service.CloudinaryService;
+import com.example.nhom3.project.common.utils.CloudinaryService;
 import com.example.nhom3.project.modules.identity.service.ProfileService;
 import com.example.nhom3.project.common.utils.SecurityUtils;
 import lombok.AccessLevel;

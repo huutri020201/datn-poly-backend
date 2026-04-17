@@ -21,7 +21,7 @@ public class FeedbackController {
             @RequestHeader("userId") UUID userId,
             @RequestBody FeedbackRequest request) {
 
-        return feedbackService.createFeedback(userId, request);
+        return feedbackService.createFeedback(request);
     }
 
     @GetMapping("/product/{productId}")

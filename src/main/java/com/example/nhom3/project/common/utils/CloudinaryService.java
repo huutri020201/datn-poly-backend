@@ -1,4 +1,4 @@
-package com.example.nhom3.project.modules.identity.service;
+package com.example.nhom3.project.common.utils;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;

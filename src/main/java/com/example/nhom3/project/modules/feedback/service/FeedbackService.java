@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface FeedbackService {
-    FeedbackResponse createFeedback(UUID userId, FeedbackRequest request);
+    FeedbackResponse createFeedback(FeedbackRequest request);
     List<FeedbackResponse> getProductFeedbacks(UUID productId);
     List<FeedbackResponse> getCourtFeedbacks(UUID courtId);
     List<FeedbackResponse> getUserFeedbacks(UUID userId);

@@ -1,5 +1,6 @@
 package com.example.nhom3.project.modules.product.service.impl;
 
+import com.example.nhom3.project.common.utils.CloudinaryService;
 import com.example.nhom3.project.modules.inventory.service.InventoryService;
 import com.example.nhom3.project.modules.product.dto.request.ProductRequest;
 import com.example.nhom3.project.modules.product.dto.request.VariantRequest;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,47 +41,54 @@ public class ProductServiceImpl implements ProductService {
     ProductMapper productMapper;
     InventoryService inventoryService;
     EntityManager entityManager;
+    CloudinaryService cloudinaryService;
     @Override
     @Transactional
-    public ProductResponse createProduct(ProductRequest request) {
+    public ProductResponse createProduct(ProductRequest request, List<MultipartFile> images) {
+        // 1. Tìm Brand & Category
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new RuntimeException("BRAND_NOT_FOUND"));
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("CATEGORY_NOT_FOUND"));
 
-        // 2. Thu thập tất cả SKU từ request
-        List<String> incomingSkus = request.getVariants().stream()
-                .map(v -> v.getSku().trim())
-                .toList();
-
-        // 3. KIỂM TRA DUY NHẤT TRONG DB (Chỉ gọi 1 lần duy nhất)
-        // Bạn có thể viết thêm hàm này trong Repository: List<ProductVariant> findBySkuIn(List<String> skus);
-        for (String sku : incomingSkus) {
-            if (variantRepository.existsBySku(sku)) {
-                throw new RuntimeException("SKU_ALREADY_EXISTS_IN_DB: " + sku);
+        // 2. Kiểm tra SKU duy nhất
+        for (VariantRequest v : request.getVariants()) {
+            if (variantRepository.existsBySku(v.getSku().trim())) {
+                throw new RuntimeException("SKU_ALREADY_EXISTS: " + v.getSku());
             }
         }
 
-        // 4. LƯU PRODUCT CHA (Dùng saveAndFlush để có ID ngay lập tức)
+        // 3. Lưu Product cha
         Product product = productMapper.toProduct(request);
         product.setBrand(brand);
         product.setCategory(category);
-
         final Product savedProduct = productRepository.saveAndFlush(product);
 
-        // 5. LƯU TỪNG VARIANT
-        for (VariantRequest variantReq : request.getVariants()) {
+        // 4. Lưu từng Variant kèm Upload ảnh
+        List<VariantRequest> variantRequests = request.getVariants();
+        for (int i = 0; i < variantRequests.size(); i++) {
+            VariantRequest variantReq = variantRequests.get(i);
             ProductVariant variant = productMapper.toVariant(variantReq);
-            variant.setProduct(savedProduct); // Dùng product đã được flush
+            variant.setProduct(savedProduct);
+
+            // LOGIC UPLOAD ẢNH: Map theo index i
+            if (images != null && i < images.size()) {
+                MultipartFile file = images.get(i);
+                if (!file.isEmpty()) {
+                    String url = cloudinaryService.uploadImage(file);
+                    variant.setImageUrl(url); // Gán URL từ Cloudinary vào variant
+                }
+            }
 
             variant = variantRepository.save(variant);
             inventoryService.initializeStock(variant.getId(), variantReq.getStockQty());
         }
-        variantRepository.flush(); // Đẩy hết variant xuống DB
-        entityManager.refresh(product); // Nạp lại product kèm các variant đã có trong DB
 
-        return productMapper.toProductResponse(product);
+        variantRepository.flush();
+        entityManager.refresh(savedProduct);
+
+        return productMapper.toProductResponse(savedProduct);
     }
 
     @Override

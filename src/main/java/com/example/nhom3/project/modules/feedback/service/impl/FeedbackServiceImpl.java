@@ -1,5 +1,8 @@
 package com.example.nhom3.project.modules.feedback.service.impl;
 
+import com.example.nhom3.project.common.exception.AppException;
+import com.example.nhom3.project.common.exception.ErrorCode;
+import com.example.nhom3.project.common.utils.SecurityUtils;
 import com.example.nhom3.project.modules.feedback.dto.FeedbackRequest;
 import com.example.nhom3.project.modules.feedback.dto.FeedbackResponse;
 import com.example.nhom3.project.modules.feedback.entity.Feedback;
@@ -29,7 +32,9 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     @Transactional
-    public FeedbackResponse createFeedback(UUID userId, FeedbackRequest request) {
+    public FeedbackResponse createFeedback(FeedbackRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_EXISTED));
         Feedback feedback = Feedback.builder()
                 .userId(userId)
                 .productId(request.getProductId())
