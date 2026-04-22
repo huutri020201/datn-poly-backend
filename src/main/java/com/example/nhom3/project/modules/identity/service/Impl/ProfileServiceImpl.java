@@ -123,14 +123,10 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')") // Bảo vệ tầng service cho chắc
+    @PreAuthorize("hasRole('ADMIN')")
     public MyProfileResponse updateProfileByAdmin(UUID targetId, AdminUpdateProfileRequest request) {
-//        Profile profile = profileRepository.findById(targetId)
-//                .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_EXISTED));
-
         User user = userRepository.findById(targetId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
         Profile profile = user.getProfile();
         if (profile == null) {
             profile = new Profile();

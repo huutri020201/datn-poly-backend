@@ -30,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,18 +108,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size) {
-        Sort sort = Sort.by("createdAt").descending(); // Sắp xếp mới nhất lên đầu
+        Sort sort = Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page - 1, size, sort);
-
-        // 2. Thực hiện truy vấn phân trang tại tầng Database
         Page<User> userPage = userRepository.findAll(pageable);
-
-        // 3. Map danh sách Entity sang DTO
         List<AdminUserResponse> dtoList = userPage.getContent().stream()
                 .map(userMapper::toAdminUserResponse)
                 .toList();
-
-        // 4. Trả về object PageResponse theo đúng cấu trúc bạn đã định nghĩa
         return PageResponse.<AdminUserResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
@@ -143,6 +138,24 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public AdminUserResponse updateUser(UUID userId, AdminUpdateUserRequest request) {
+
+        UUID currentAdminId = SecurityUtils.getCurrentUserId();
+
+        if (userId.equals(currentAdminId)) {
+            User currentAdminInDb = userRepository.findById(currentAdminId)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+            UserStatus statusRequest = request.getStatus();
+            UserStatus statusInDb = currentAdminInDb.getStatus();
+            if (statusRequest != null && statusRequest != statusInDb) {
+                throw new AppException(ErrorCode.CANNOT_CHANGE_SELF_STATUS);
+            }
+            boolean hasAdminRole = request.getRoles().stream()
+                    .anyMatch(role -> role.equalsIgnoreCase("ROLE_ADMIN"));
+
+            if (!hasAdminRole) {
+                throw new AppException(ErrorCode.CANNOT_REMOVE_ADMIN_ROLE);
+            }
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -175,11 +188,17 @@ public class UserServiceImpl implements UserService {
         if (request.getFailedAttemptCount() != null && request.getFailedAttemptCount() == 0) {
             user.setLockedUntil(null);
         }
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            user.setBanReason(null);
+        } else if (user.getStatus() == UserStatus.BANNED) {
+            if (StringUtils.hasText(request.getBanReason())) {
+                user.setBanReason(request.getBanReason());
+            }
+        }
 
         return userMapper.toAdminUserResponse(userRepository.save(user));
     }
 
-    // Điều khiển trạng thái
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -227,10 +246,10 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         eventPublisher.publishEvent(NotificationEvent.builder()
-                .identifier(user.getEmail()) // Ưu tiên email
+                .identifier(user.getEmail())
                 .type(VerificationType.ACCOUNT_LOCK)
-                .targetName(reason) // Gửi kèm lý do
-                .newValue(until.toString()) // Thời hạn
+                .targetName(reason)
+                .newValue(until.toString())
                 .build());
 
         return userMapper.toAdminUserResponse(user);

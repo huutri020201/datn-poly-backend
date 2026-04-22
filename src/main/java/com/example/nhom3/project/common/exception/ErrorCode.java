@@ -36,6 +36,7 @@ public enum ErrorCode {
     INVALID_REQUEST(1019, "Yêu cầu tạo người dùng mới không hợp lệ", HttpStatus.BAD_REQUEST),
     PROFILE_NOT_EXISTED(1020, "Hồ sơ người dùng không tồn tại", HttpStatus.BAD_REQUEST),
     INVALID_MEMBERSHIP_LEVEL(1021, "Membership level không hợp lệ", HttpStatus.BAD_REQUEST),
+    CANNOT_REMOVE_ADMIN_ROLE(1022, "Không thể xóa role admin", HttpStatus.BAD_REQUEST),
 
     // ========================================================================
     // 11xx: ROLE (Phân quyền)
@@ -70,6 +71,7 @@ public enum ErrorCode {
     ACCOUNT_TEMPORARILY_LOCKED(1302, "Tài khoản bị khóa tạm thời. Vui lòng thử lại sau", HttpStatus.FORBIDDEN),
     ACCOUNT_LOCKED_BY_ADMIN(1303, "Tài khoản bị khóa bởi quản trị viên", HttpStatus.FORBIDDEN),
     USER_DELETED_PERMANENTLY(1304, "Tài khoản đã bị xóa vĩnh viễn", HttpStatus.GONE),
+    CANNOT_CHANGE_SELF_STATUS (1305, "Không thể tự thay đổi trạng thái của bản thân", HttpStatus.BAD_REQUEST),
 
     // ========================================================================
     // 14xx: UPLOAD
