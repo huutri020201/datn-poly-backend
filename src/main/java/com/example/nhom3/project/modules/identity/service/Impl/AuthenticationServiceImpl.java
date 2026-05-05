@@ -20,6 +20,7 @@ import com.example.nhom3.project.modules.identity.service.AuthenticationService;
 import com.example.nhom3.project.modules.identity.service.JwtProvider;
 import com.example.nhom3.project.modules.identity.service.OtpLockoutManager;
 import com.example.nhom3.project.modules.identity.validator.RegisterValidator;
+import com.example.nhom3.project.modules.promotion.service.PromotionService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
@@ -61,7 +62,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     ApplicationEventPublisher eventPublisher;
 
     OtpLockoutManager otpLockoutManager;
-//    PromotionService promotionService;
+    PromotionService promotionService;
 
     @Override
     @Transactional
@@ -128,8 +129,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String target = method.equalsIgnoreCase("EMAIL") ? user.getEmail() : user.getPhone();
         if (target == null) throw new AppException(ErrorCode.INVALID_RECOVERY_METHOD);
 
-        // 3. Gọi hàm generate thần thánh của mày
-        // Nó sẽ tự động rơi vào nhánh "else" (OTP) vì type không phải là REGISTER
         SecurityCodePayload payload = generateSecurityCode(user, target, VerificationType.FORGOT_PASSWORD);
 
         // 4. Bắn Event để hệ thống gửi Mail/SMS thực tế
@@ -232,7 +231,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         VerificationResponse.VerificationResponseBuilder responseBuilder = VerificationResponse.builder().verified(true);
 
-        // PHÂN LUỒNG TRẢ VỀ THEO Ý MÀY
         if (type == VerificationType.FORGOT_PASSWORD) {
             String resetToken = UUID.randomUUID().toString();
             verificationTokenRepository.save(VerificationToken.builder()
@@ -252,24 +250,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public ApiResponse<Object> resendVerification(String identifier, VerificationType type) {
-        // 1. Check User tồn tại
         User user = userRepository.findByEmailOrPhone(identifier)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Instant now = Instant.now();
 
-        // 2. Check Lockout (Khóa do nhập sai quá nhiều lần trước đó)
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             throw new AppException(ErrorCode.ACCOUNT_TEMPORARILY_LOCKED);
         }
-
-        // 3. Logic chặn Spam Resend (Check xem đã đủ điều kiện gửi lại chưa)
         validateResendCondition(user, identifier, type, now);
 
-        // 4. Triệu hồi "nhà máy" gen code (Đã xử lý Token/OTP bên trong)
         SecurityCodePayload payload = generateSecurityCode(user, identifier, type);
 
-        // 5. Bắn Event gửi thông báo
         eventPublisher.publishEvent(NotificationEvent.builder()
                 .identifier(identifier)
                 .code(payload.code())
@@ -278,7 +270,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.info("Đã gửi lại mã/link xác thực ({}) cho: {}", type, identifier);
 
-        // 6. Trả về Metadata cho FE
         return ApiResponse.<Object>success(null, "Mã xác thực mới đã được gửi.")
                 .toBuilder()
                 .metadata(payload.metadata())
@@ -289,26 +280,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // 1. Tìm User
         User user = userRepository.findByEmailOrPhone(request.getIdentifier())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // 2. Check Password
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
         if (!authenticated) {
-            processFailedAttempt(user); // Hàm này mày giữ nguyên để tăng count sai pass
+            processFailedAttempt(user);
             throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
 
-        // 3. Check các trạng thái "Chết" (Banned, Deleted, Locked)
         checkUserStatus(user);
 
-        // 4. Check XÁC THỰC (UNVERIFIED) - Chỗ này mày cần nhất nè
         if (user.getStatus() == UserStatus.UNVERIFIED) {
             handleUnverifiedUser(user, request.getIdentifier());
         }
 
-        // 5. Nếu mọi thứ OK -> Reset số lần sai pass và trả về Token
         resetFailedAttempts(user);
         return generateAuthenticationResponse(user);
     }
@@ -316,28 +302,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
-        // 1. Tìm Token trong DB
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
 
         Instant now = Instant.now();
 
-        // 2. Kiểm tra: Đã bị thu hồi (revoked) chưa? Đã hết hạn (expires_at) chưa?
         if (refreshToken.isRevoked() || refreshToken.getExpiresAt().isBefore(now)) {
-            // Nếu token không còn hợp lệ, xóa luôn cho sạch DB (hoặc giữ lại tùy mày)
             refreshTokenRepository.delete(refreshToken);
             throw new AppException(ErrorCode.TOKEN_EXPIRED);
         }
 
-        // 3. Lấy User để tạo cặp Token mới
         User user = refreshToken.getUser();
 
-        // 4. Vô hiệu hóa Token cũ (Revoke)
-        // Thay vì xóa ngay, mình set revoked = true để đánh dấu nó đã được dùng
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);
 
-        // 5. Trả về cặp Token mới (Hàm này sẽ save 1 bản ghi RefreshToken mới vào DB)
         return generateAuthenticationResponse(user);
     }
 
@@ -406,6 +385,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (isEmailRegister) {
             verificationTokenRepository.invalidateAllActiveTokens(user, type);
             String token = UUID.randomUUID().toString();
+            System.out.println("DEBUG: Token được tạo cho email " + identifier + " là: " + token);
             long expirySeconds = 86400;
 
             verificationTokenRepository.save(VerificationToken.builder()
@@ -423,12 +403,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return new SecurityCodePayload(token, meta);
         }
         else {
-            // --- LOGIC XỬ LÝ OTP (Cho Phone hoặc Forgot Password Email) ---
             VerificationOtpCode latestOtp = verificationOtpCodeRepository
                     .findTopByUserAndTypeOrderByCreatedAtDesc(user, type)
                     .orElse(null);
-
-            // Check xem có đang bị khóa do nhập sai > 5 lần không
             if (latestOtp != null && latestOtp.getAttemptCount() >= 5 && latestOtp.getExpiryAt().isAfter(now)) {
                 long remainingSeconds = Duration.between(now, latestOtp.getExpiryAt()).getSeconds();
                 throw new AppException(ErrorCode.OTP_LOCKED, Map.of(
@@ -436,11 +413,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         "remainingAttempts", 0
                 ));
             }
-
-            // Vô hiệu hóa mã cũ
             verificationOtpCodeRepository.invalidateAllActiveOtp(user, type);
 
-            // Tạo OTP mới
             String otpCode = String.format("%06d", new SecureRandom().nextInt(900000) + 100000);
             int resendCount = (latestOtp != null) ? latestOtp.getResendCount() + 1 : 1;
             long expirySeconds = 120;
@@ -451,7 +425,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .resendCount((latestOtp != null) ? latestOtp.getResendCount() + 1 : 1)
                     .lastResendAt(now).isUsed(false).build());
 
-            // Metadata cho OTP
             Map<String, Object> meta = new HashMap<>();
             meta.put("target", maskedTarget);
             meta.put("remainingSeconds", expirySeconds);
@@ -468,6 +441,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             user.setStatus(UserStatus.ACTIVE);
             userRepository.save(user);
             // promotionService.rewardWelcomeVoucher(user);
+            promotionService.rewardWelcomeVoucher(user);
             eventPublisher.publishEvent(new UserActivatedEvent(this, user));
             log.info("User {} activated successfully", user.getId());
         } else if (type == VerificationType.FORGOT_PASSWORD) {
@@ -478,15 +452,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private AuthenticationResponse generateAuthenticationResponse(User user) {
         String accessToken = jwtProvider.generateToken(user, 900); // 15p
-        String refreshTokenStr = UUID.randomUUID().toString(); // Hoặc dùng jwtProvider nếu muốn JWT
+        String refreshTokenStr = UUID.randomUUID().toString();
 
-        // BẮT BUỘC: Lưu vào DB bảng refresh_tokens
         RefreshToken refreshTokenEntity = RefreshToken.builder()
                 .token(refreshTokenStr)
                 .user(user)
                 .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .revoked(false)
-                // .deviceInfo(...) // Nếu có thông tin device thì nhét vào đây
+                // .deviceInfo(...)
                 .build();
         refreshTokenRepository.save(refreshTokenEntity);
 
@@ -494,29 +467,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private void validateResendCondition(User user, String identifier, VerificationType type, Instant now) {
-        // Check CHÍNH XÁC dựa trên identifier người dùng đang nhập ở FE
         boolean isEmail = identifier.contains("@");
         boolean isEmailRegister = (type == VerificationType.REGISTER && isEmail);
 
-        // Nếu là Email Register -> Không chặn 2 phút, cho phép gửi lại link thoải mái hơn
         if (isEmailRegister) {
             return;
         }
 
-        // Luồng cho OTP (Phone hoặc Forgot Password)
         VerificationOtpCode lastOtp = verificationOtpCodeRepository
                 .findTopByUserAndTypeOrderByCreatedAtDesc(user, type)
                 .orElse(null);
 
         if (lastOtp != null) {
-            // 1. Chống phá hoại: Gửi quá 5 lần thì khóa 2h
             if (lastOtp.getResendCount() >= 5) {
                 user.setLockedUntil(now.plus(Duration.ofHours(2)));
                 userRepository.save(user);
                 throw new AppException(ErrorCode.TOO_MANY_RESEND_ATTEMPTS);
             }
 
-            // 2. Chống spam: Phải đợi mã cũ hết hạn (2 phút) mới được xin mã mới
             if (now.isBefore(lastOtp.getExpiryAt())) {
                 long secondsLeft = Duration.between(now, lastOtp.getExpiryAt()).getSeconds();
                 throw new AppException(ErrorCode.RESEND_TOO_OFTEN, Map.of("secondsLeft", secondsLeft));
@@ -528,18 +496,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Instant now = Instant.now();
         VerificationType type = VerificationType.REGISTER;
 
-        // Tìm mã OTP/Token gần nhất của luồng Register
-        // (Vì identifier có thể là Email hoặc Phone nên nó sẽ tự check đúng bảng)
         SecurityCodePayload payload;
 
         try {
-            // Tận dụng luôn hàm validateResendCondition để check xem cái cũ còn dùng được không
             validateResendCondition(user, identifier, type, now);
-
-            // Nếu không ném lỗi (tức là mã cũ đã hết hạn hoặc chưa có), ta tạo mã mới luôn
             payload = generateSecurityCode(user, identifier, type);
-
-            // Bắn event thông báo luôn cho nóng
             eventPublisher.publishEvent(NotificationEvent.builder()
                     .identifier(identifier)
                     .code(payload.code())
@@ -547,27 +508,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .build());
 
         } catch (AppException e) {
-            // Nếu validateResendCondition báo lỗi (tức là mã cũ VẪN CÒN HẠN)
-            // Ta đi tìm cái mã đó trong DB để lấy metadata trả về cho FE
             payload = fetchExistingMetadata(user, type, identifier);
         }
 
         throw new AppException(
                 ErrorCode.USER_NOT_VERIFIED,
                 "Tài khoản chưa xác thực. Vui lòng nhập mã đã gửi.",
-                payload.metadata() // Trả về đầy đủ: remainingSeconds, resendCount...
+                payload.metadata()
         );
     }
 
     private SecurityCodePayload fetchExistingMetadata(User user, VerificationType type, String identifier) {
-        // 1. Xác định xem trường hợp này đang dùng Token hay OTP
         boolean isEmail = identifier.contains("@");
         boolean useToken = (type == VerificationType.REGISTER && isEmail);
 
         String maskedTarget = isEmail ? maskEmail(identifier) : maskPhone(identifier);
 
         if (useToken) {
-            // --- TRƯỜNG HỢP TOKEN (Chỉ dành cho Register qua Email) ---
             VerificationToken token = verificationTokenRepository.findByUserAndType(user, type)
                     .orElseThrow(() -> new AppException(ErrorCode.NO_ACTIVE_OTP_FOUND));
 
@@ -579,7 +536,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return new SecurityCodePayload(token.getToken(), meta);
 
         } else {
-            // --- TRƯỜNG HỢP OTP (Register bằng SĐT HOẶC Forgot Password bằng cả Email/SĐT) ---
             VerificationOtpCode otp = verificationOtpCodeRepository.findTopByUserAndTypeOrderByCreatedAtDesc(user, type)
                     .orElseThrow(() -> new AppException(ErrorCode.NO_ACTIVE_OTP_FOUND));
 
@@ -606,31 +562,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private void checkUserStatus(User user) {
         Instant now = Instant.now();
 
-        // 1. Check xem có bị BANNED không
         if (user.getStatus() == UserStatus.BANNED) {
             throw new AppException(ErrorCode.ACCOUNT_BANNED);
         }
 
-        // 2. Check xem có đang trong thời gian bị khóa (LockedUntil) không
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             long minutesLeft = Duration.between(now, user.getLockedUntil()).toMinutes();
             throw new AppException(ErrorCode.ACCOUNT_TEMPORARILY_LOCKED,
                     Map.of("lockedUntil", user.getLockedUntil(), "minutesLeft", Math.max(1, minutesLeft)));
         }
 
-        // 3. Check logic Xóa mềm (Soft Delete - 30 ngày)
         if (user.getDeletedAt() != null) {
             Instant deadline = user.getDeletedAt().plus(30, ChronoUnit.DAYS);
             if (now.isAfter(deadline)) {
                 throw new AppException(ErrorCode.USER_NOT_EXISTED);
             }
 
-            // Nếu Admin xóa thì không cho tự khôi phục
             if (user.isDeletedByAdmin()) {
                 throw new AppException(ErrorCode.ACCOUNT_LOCKED_BY_ADMIN);
             }
 
-            // Nếu User tự xóa mà nay login lại thì khôi phục luôn
             user.setDeletedAt(null);
             user.setStatus(UserStatus.ACTIVE);
             log.info("Tài khoản {} đã tự động khôi phục.", user.getId());
@@ -641,7 +592,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (user.getFailedAttemptCount() > 0 || user.getLockedUntil() != null) {
             user.setFailedAttemptCount(0);
             user.setLockedUntil(null);
-            userRepository.save(user); // Lưu lại trạng thái sạch
+            userRepository.save(user);
             log.info("Reset failed attempts for user: {}", user.getId());
         }
     }

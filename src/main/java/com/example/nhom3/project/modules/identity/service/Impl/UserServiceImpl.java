@@ -479,7 +479,6 @@ public class UserServiceImpl implements UserService {
                 .newValue(newValue)
                 .build());
 
-        // Nếu có số điện thoại, bắn thêm 1 event nữa cho số điện thoại
         if (StringUtils.hasText(user.getPhone())) {
             eventPublisher.publishEvent(NotificationEvent.builder()
                     .identifier(user.getPhone())

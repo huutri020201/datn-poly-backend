@@ -41,7 +41,11 @@ public class EmailService {
 
             String content = (event.getCustomMessage() != null) ? event.getCustomMessage() :
                     switch (event.getType()) {
-                        case REGISTER -> "Vui lòng click vào link để xác thực: http://localhost:5173/verify?token=" + event.getCode();
+//                        case REGISTER -> "Vui lòng click vào link để xác thực: http://localhost:5173/verify?token=" + event.getCode();
+                        case REGISTER -> String.format(
+                                "Vui lòng click vào link để xác thực: http://localhost:5173/verify?token=%s&identifier=%s",
+                                event.getCode(), event.getIdentifier()
+                        );
                         case SECURITY_UPDATE -> String.format("Thông tin [%s] của bạn đã được cập nhật thành: %s",
                                 event.getTargetName(), event.getNewValue());
                         case ACCOUNT_LOCK -> String.format("Tài khoản bị khóa vì lý do: %s. Hiệu lực đến: %s",
