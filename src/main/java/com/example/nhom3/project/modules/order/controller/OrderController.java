@@ -21,7 +21,7 @@ public class OrderController {
 
     @PostMapping
     public ApiResponse<OrderResponse> placeOrder(
-            HttpServletRequest request, // Thêm tham số này
+            HttpServletRequest request,
             @RequestBody @Valid OrderPlaceRequest orderRequest) {
 
         UUID userId = SecurityUtils.getCurrentUserId();
